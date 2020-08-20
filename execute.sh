@@ -1,0 +1,1 @@
+gcc mishell.c -o mishell.o && ./mishell.o
