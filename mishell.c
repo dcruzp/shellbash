@@ -4,20 +4,34 @@
 #include <unistd.h> 
 #include <sys/types.h> 
 #include <sys/wait.h> 
+#include <stdlib.h>
 
 
 #define max_lon 100 
 
 char command [max_lon] ; 
 
+/*Variables de ambiente */
+char SHELL [max_lon];
+char PATH [max_lon]; 
+char HOME [max_lon]; 
+char PWD [max_lon];  
+
+
 char * ptr [10]  , *token ; 
 char delimit [] = " "  ;  
-int i ; 
+int flag = 1  , i ; 
 
-int flag  = 1 ; 
+ 
 
-int main () {
+int main (void) {
     
+
+    getcwd (PWD , max_lon);
+    strcpy (PATH , getenv ("PATH")); 
+    strcpy (HOME , PWD) ; 
+    strcpy (SHELL , PWD ) ; 
+    //printf ("%s", PATH ) ;  
 
     while (flag)
     {
@@ -28,9 +42,34 @@ int main () {
         memset (command , '\0' , max_lon) ; 
         scanf("%[^\n]s" , command) ;
 
+
+        token = strtok (command , delimit) ; 
+
+        i=0; 
+        while (token != NULL) 
+        {
+            ptr [i++ ] = token ; 
+            token = strtok (NULL , delimit) ;  
+        }  
+        ptr[i] = NULL; 
+
         if (strcmp (command , "exit") == 0 )
         {            
             flag =  0;  
+        }
+        else if (strcmp(ptr[0], "cd")==0)
+        {
+            if (ptr[1]) 
+            {
+                if (chdir (ptr[1])!=0)
+                {
+                    printf ("Error : %s  no existe o no se puede cambiar a este directorio ", ptr[1] );    
+                }
+                else 
+                {
+                    getcwd (PWD , max_lon);
+                }
+            } 
         }
         else
         {
@@ -46,17 +85,6 @@ int main () {
             }
             else if (process == 0 )
             {
-                
-                token = strtok (command , delimit) ; 
-
-                i=0; 
-                while (token != NULL) 
-                {
-                    ptr [i++ ] = token ; 
-                    token = strtok (NULL , delimit) ;  
-                }  
-                ptr [i] = NULL  ; 
-
                 execvp (ptr[0] ,ptr ) ;  
 
                 printf("%s", "this should not print "); 
@@ -64,11 +92,8 @@ int main () {
             else 
             {
                 pid_t wc  = wait(NULL) ; 
-                
             }
-            
         }        
     }
     return 0 ; 
 }
-
