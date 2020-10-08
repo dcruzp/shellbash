@@ -10,6 +10,10 @@
 
 char command [max_lon] ; 
 
+char * ptr [10]  , *token ; 
+char delimit [] = " "  ;  
+int i ; 
+
 int flag  = 1 ; 
 
 int main () {
@@ -25,8 +29,7 @@ int main () {
         scanf("%[^\n]s" , command) ;
 
         if (strcmp (command , "exit") == 0 )
-        {
-            
+        {            
             flag =  0;  
         }
         else
@@ -43,17 +46,25 @@ int main () {
             }
             else if (process == 0 )
             {
-                char * arr [10]; 
-                arr [0] = command ;
-                arr [1] = NULL ; 
-                execvp (arr [0] , arr);
+                
+                token = strtok (command , delimit) ; 
+
+                i=0; 
+                while (token != NULL) 
+                {
+                    ptr [i++ ] = token ; 
+                    token = strtok (NULL , delimit) ;  
+                }  
+                ptr [i] = NULL  ; 
+
+                execvp (ptr[0] ,ptr ) ;  
 
                 printf("%s", "this should not print "); 
             }
             else 
             {
                 pid_t wc  = wait(NULL) ; 
-                //printf("%s" ,"test") ;
+                
             }
             
         }        
