@@ -22,7 +22,7 @@ char * ptr [10]  , *token ;
 char delimit [] = " "  ;  
 int flag = 1  , i ; 
 
- 
+char *redir [3] ; 
 
 int main (void) {
     
@@ -30,13 +30,12 @@ int main (void) {
     getcwd (PWD , max_lon);
     strcpy (PATH , getenv ("PATH")); 
     strcpy (HOME , PWD) ; 
-    strcpy (SHELL , PWD ) ; 
-    //printf ("%s", PATH ) ;  
+    strcpy (SHELL , PWD ) ;    
 
     while (flag)
     {
             
-        printf("%s$ " , "shell" ); 
+        printf("%s$ " , "Shell"); 
         __fpurge (stdin); 
 
         memset (command , '\0' , max_lon) ; 
@@ -67,7 +66,7 @@ int main (void) {
                 }
                 else 
                 {
-                    getcwd (PWD , max_lon);
+                    getcwd (PWD ,max_lon);
                 }
             } 
         }
@@ -96,4 +95,23 @@ int main (void) {
         }        
     }
     return 0 ; 
+}
+
+
+void parser (char command [] ) 
+{
+
+} 
+
+char *str1;   
+
+void splitstr (char cadena []  , char delimit [] ) 
+{
+    
+    for ( i=0 , str1 = cadena  ; ; i++ , str1 = NULL ) 
+    {
+        token = strtok (str1 , delimit); 
+        ptr [i]  = token ; 
+        if (token == NULL ) break ;  
+    }
 }
