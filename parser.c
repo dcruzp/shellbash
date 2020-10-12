@@ -144,18 +144,12 @@ void parsercommand (struct command * cmd)
         token = strtok(NULL , delimit);
         cmd->numArgv ++ ;  
     }
-    
-    int i ; 
-    for (i =0 ; i < cmd->numArgv ; i++)
-    {
-        printf ("%s\n" , cmd->argv[i].b);
-    }
 }
 
 
 int main (void) 
 {
-     
+    /*
     struct  abuf input  = ABUF_INIT ; 
 
     struct command cmd  = {ABUF_INIT,ABUF_INIT,ABUF_INIT};
@@ -167,6 +161,27 @@ int main (void)
     printcommand (&cmd);  
 
     parsercommand (&cmd) ; 
+    */
+
+    char **code = NULL ; 
+    int numstr = 0 ; 
+
+    char *cadena1  = "ls"; 
+    char *cadena2 = "-l";
+
+    code = realloc (code , sizeof(char* ) * (numstr + 1 ));
+
+    * (code + numstr ++ ) = strdup (cadena1);   
+
+    code = realloc (code , sizeof (char*) * (numstr + 1)); 
+
+    * (code + numstr ++ ) = strdup (cadena2); 
+    
+    printf ("%s\n%s\n" , code [0], code [1]) ;  
+
+ 
+
+
     return 0 ; 
 
 } 
