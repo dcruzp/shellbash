@@ -1,186 +1,130 @@
-
-/*
-#include <stdio.h> 
-
-
-
-
-int main (void )
-{
-
-    return 0 ; 
-} 
-*/
-
-/*
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-int
-main(int argc, char *argv[])
-{
-    char *str1, *str2, *token, *subtoken;
-    char *saveptr1, *saveptr2;
-    int j;
-
-    if (argc != 4) {
-        fprintf(stderr, "Usage: %s string delim subdelim\n",argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    for (j = 1, str1 = argv[1]; ; j++, str1 = NULL) 
-    {
-        token = strtok_r(str1, argv[2], &saveptr1);
-        if (token == NULL)
-            break;
-        printf("%d: %s\n", j, token);
-
-        for (str2 = token; ; str2 = NULL)
-        {
-            subtoken = strtok_r(str2, argv[3], &saveptr2);
-            if (subtoken == NULL)
-                break;
-            printf(" --> %s\n", subtoken);
-        }
-    }
-    exit(EXIT_SUCCESS);
-}
-*/
-
 #include <stdio.h>
 #include <stdlib.h> 
 #include <string.h> 
 
 
-#define ABUF_INIT {NULL ,0}
-
-struct abuf 
-{
-    char *b ; 
-    int len ; 
-}abuf;
-
-
 struct command 
 {
-    struct abuf cmd ; 
-    struct abuf input ; 
-    struct abuf output ; 
-    struct abuf *argv ;
+    char *cmd ; 
+    char *input ; 
+    char *output ; 
+    char **argv ;
     int numArgv ; 
 };
 
 
-void abAppend (struct abuf *ab , const char *s , int len) 
+int matchcharacter (char c , char * str) 
 {
-    char *new = realloc(ab->b , ab->len + len);
-    
-    if (new == NULL) return ; 
-    memcpy (&new [ab->len], s, len ) ; 
-    ab->b = new ; 
-    ab ->len += len; 
-} 
-
-void abFree (struct abuf * ab )
-{
-    free (ab->b) ; 
+    char str1 [] = {c, '\0'};
+    if (strstr (str , str1)!=NULL)
+    {
+        return 1; 
+    }
+    return 0 ; 
 }
-
 
 void parser (char * input ,struct  command *cmd )
 {
-    int i  ;  
+    int i  , len ;  
+    char * str = "<>\0"; 
 
-    for (i=0;*(input + i ) != '\0' && *(input + i ) != '>' && *(input +i) != '<' ;i++)
-        abAppend (&cmd->cmd ,(input+i),1);
-
+    for (i=0 , len =0 ;! matchcharacter (*(input +i ) , str);i++ )
+    {
+        cmd->cmd = realloc (cmd ->cmd, sizeof (char ) * (len +1)); 
+        cmd->cmd [len] = *(input + i ) ;
+        len++;
+    }
+         
     for ( ; *(input + i ) != '\0' ; )
     {   
         if (*(input + i ) == '>')
         {
             
-            if (*(input + i + 1 ) == '>')
+            if (*(input + i + 1 ) == '>')printf ("macheo"); 
             {
                 printf ("%s\n" , "check") ; 
                 i++;
             }
-            for (i++ ; *(input + i ) != '\0' && *(input + i ) != '>' && *(input +i ) != '<' ; i++)
+            for (i++ ,len =0 ; ! matchcharacter (*(input +i) ,str) ; i++ )
             {
                 if (*(input + i ) == ' ')continue; 
-                abAppend (&cmd->output, (input +i ) , 1) ;  
+                cmd->output =  realloc (cmd->output , sizeof (char) * (len + 1));
+                cmd->output [len] = * (input+i) ; 
+                len ++ ; 
             }
         }
         if (*(input+i) == '<')
         {
-            for (i++ ; *(input + i ) != '\0' && *(input + i ) != '>'  && *(input +i ) != '<' ; i++)
-            {
-                if (*(input + i ) == ' ')continue; 
-                abAppend (&cmd->input, (input +i ) , 1) ;  
-            }
             
+            for (i++ , len = 0 ; ! matchcharacter (*(input +i ),str ); i++ )
+            {
+                
+                if (*(input + i ) == ' ') continue ; 
+                cmd->input =  realloc (cmd->input , sizeof (char) * (len + 1 ));
+                cmd->input [len] = * (input+i) ;
+                len ++ ;  
+            }
         }
     }
 } 
 
 void printcommand (struct command * cmd )
 {
-    printf ("comando-> %s\n" , cmd->cmd.b);
-    printf ("input  -> %s\n" , cmd->input.b);
-    printf ("output -> %s\n" , cmd->output.b); 
+    printf ("comando-> %s\n" , cmd->cmd );
+    printf ("input  -> %s\n" , cmd->input );
+    printf ("output -> %s\n" , cmd->output); 
+
+    printf ("Arguments:\n");
+    int i ; 
+    for ( i= 0 ; i< cmd ->numArgv ; i++)
+    {
+        printf ("%s\n", cmd->argv [i]); 
+    }
 } 
+
 
 void parsercommand (struct command * cmd)
 {
     char * token ,delimit [] = " "  ; 
-    cmd->numArgv = 0 ;
-    token = strtok( cmd->cmd.b  , delimit);
+    token = strtok( cmd->cmd  , delimit);
     
     
     while (token != NULL)
     {
-        cmd->argv = realloc (cmd->argv ,sizeof(abuf) * (cmd->numArgv +1 )) ; 
-        abAppend(&cmd->argv[cmd->numArgv], token , strlen (token)); 
-        token = strtok(NULL , delimit);
-        cmd->numArgv ++ ;  
+        cmd->argv = realloc (cmd->argv , sizeof (char * ) * (cmd ->numArgv + 1 ));
+        cmd->argv [cmd->numArgv] = token ; 
+        cmd->numArgv ++ ; 
+        token = strtok (NULL , delimit);
     }
+
+    cmd->argv = realloc (cmd->argv , sizeof (char*)* (cmd->numArgv + 1));
+    cmd->argv [cmd->numArgv] = NULL ; 
 }
 
+void initCommand (struct command * cmd )
+{
+    cmd-> cmd = NULL; 
+    cmd-> input = NULL ; 
+    cmd-> output = NULL; 
+    cmd-> argv = NULL ; 
+    cmd-> numArgv = 0 ; 
+} 
 
 int main (void) 
 {
-    /*
-    struct  abuf input  = ABUF_INIT ; 
-
-    struct command cmd  = {ABUF_INIT,ABUF_INIT,ABUF_INIT};
-
-    abAppend (&input , "ls -l < file1 > file2" , 23) ;      
     
-    parser (input.b , &cmd) ;
+    
+    char *command = " ls -l /usr/bin < input.txt > output.txt"; 
+    
+    struct command cmd ;
+    initCommand (&cmd); 
 
-    printcommand (&cmd);  
+    parser (command , &cmd) ;
 
     parsercommand (&cmd) ; 
-    */
-
-    char **code = NULL ; 
-    int numstr = 0 ; 
-
-    char *cadena1  = "ls"; 
-    char *cadena2 = "-l";
-
-    code = realloc (code , sizeof(char* ) * (numstr + 1 ));
-
-    * (code + numstr ++ ) = strdup (cadena1);   
-
-    code = realloc (code , sizeof (char*) * (numstr + 1)); 
-
-    * (code + numstr ++ ) = strdup (cadena2); 
     
-    printf ("%s\n%s\n" , code [0], code [1]) ;  
-
- 
-
+    printcommand (&cmd);  
+    
 
     return 0 ; 
 

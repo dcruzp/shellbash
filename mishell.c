@@ -11,22 +11,14 @@
 #define max_lon 100 
 
 
-#define ABUF_INIT {NULL ,0}
-
-struct abuf 
-{
-    char *b ; 
-    int len ; 
-}abuf;
-
-
 struct command 
 {
-    struct abuf cmd ; 
-    struct abuf input ; 
-    struct abuf output ; 
-    struct abuf *argv ;
+    char *cmd ; 
+    char *input ; 
+    char *output ; 
+    char **argv ;
     int numArgv ; 
+    int outappend ; 
 };
 
 
@@ -46,31 +38,29 @@ int flag = 1  , i ;
 char *redir [3] ; 
 
 
-void abAppend (struct abuf *ab , const char *s , int len) 
-{
-    char *new = realloc(ab->b , ab->len + len);
-    
-    if (new == NULL) return ; 
-    memcpy (&new [ab->len], s, len ) ; 
-    ab->b = new ; 
-    ab ->len += len; 
-} 
 
-void abFree (struct abuf * ab )
+int matchcharacter (char c , char * str) 
 {
-    free (ab->b) ; 
+    char str1 [] = {c, '\0'};
+    if (strstr (str , str1)!=NULL)
+    {
+        return 1; 
+    }
+    return 0 ; 
 }
-
-
-
 
 void parser (char * input ,struct  command *cmd )
 {
-    int i  ;  
+    int i  , len ;  
+    char * str = "<>\0"; 
 
-    for (i=0;*(input + i ) != '\0' && *(input + i ) != '>' && *(input +i) != '<' ;i++)
-        abAppend (&cmd->cmd ,(input+i),1);
-
+    for (i=0 , len =0 ;! matchcharacter (*(input +i ) , str);i++ )
+    {
+        cmd->cmd = realloc (cmd ->cmd, sizeof (char ) * (len +1)); 
+        cmd->cmd [len] = *(input + i ) ;
+        len++;
+    }
+         
     for ( ; *(input + i ) != '\0' ; )
     {   
         if (*(input + i ) == '>')
@@ -78,42 +68,78 @@ void parser (char * input ,struct  command *cmd )
             
             if (*(input + i + 1 ) == '>')
             {
-                printf ("%s\n" , "check") ; 
+                cmd->outappend ++;
                 i++;
             }
-            for (i++ ; *(input + i ) != '\0' && *(input + i ) != '>' && *(input +i ) != '<' ; i++)
+            for (i++ ,len =0 ; ! matchcharacter (*(input +i) ,str) ; i++ )
             {
                 if (*(input + i ) == ' ')continue; 
-                abAppend (&cmd->output, (input +i ) , 1) ;  
+                cmd->output =  realloc (cmd->output , sizeof (char) * (len + 1));
+                cmd->output [len] = * (input+i) ; 
+                len ++ ; 
             }
         }
         if (*(input+i) == '<')
         {
-            for (i++ ; *(input + i ) != '\0' && *(input + i ) != '>'  && *(input +i ) != '<' ; i++)
-            {
-                if (*(input + i ) == ' ')continue; 
-                abAppend (&cmd->input, (input +i ) , 1) ;  
-            }
             
+            for (i++ , len = 0 ; ! matchcharacter (*(input +i ),str ); i++ )
+            {
+                
+                if (*(input + i ) == ' ') continue ; 
+                cmd->input =  realloc (cmd->input , sizeof (char) * (len + 1 ));
+                cmd->input [len] = * (input+i) ;
+                len ++ ;  
+            }
         }
     }
-} 
 
-void parsercommand (struct command * cmd)
-{
+
     char * token ,delimit [] = " "  ; 
-    cmd->numArgv = 0 ;
-    token = strtok( cmd->cmd.b  , delimit);
+    token = strtok( cmd->cmd  , delimit);
     
     
     while (token != NULL)
     {
-        cmd->argv = realloc (cmd->argv ,sizeof(abuf) * (cmd->numArgv +1 )) ; 
-        abAppend(&cmd->argv[cmd->numArgv], token , strlen (token)); 
-        token = strtok(NULL , delimit);
-        cmd->numArgv ++ ;  
+        cmd->argv = realloc (cmd->argv , sizeof (char * ) * (cmd ->numArgv + 1 ));
+        cmd->argv [cmd->numArgv] = token ; 
+        cmd->numArgv ++ ; 
+        token = strtok (NULL , delimit);
     }
-}
+
+    cmd->argv = realloc (cmd->argv , sizeof (char*)* (cmd->numArgv + 1));
+    cmd->argv [cmd->numArgv] = NULL ; 
+
+} 
+
+
+void initCommand (struct command * cmd )
+{
+    cmd-> cmd = NULL; 
+    cmd-> input = NULL ; 
+    cmd-> output = NULL; 
+    cmd-> argv = NULL ; 
+    cmd-> numArgv = 0 ; 
+    cmd-> outappend = 0 ; 
+} 
+
+
+
+
+
+
+void printcommand (struct command * cmd )
+{
+    printf ("comando-> %s\n" , cmd->cmd );
+    printf ("input  -> %s\n" , cmd->input );
+    printf ("output -> %s\n" , cmd->output); 
+
+    printf ("Arguments:\n");
+    int i ; 
+    for ( i= 0 ; i< cmd ->numArgv ; i++)
+    {
+        printf ("%s\n", cmd->argv [i]); 
+    }
+} 
 
 
 int main (void) {
@@ -133,36 +159,26 @@ int main (void) {
         memset (command , '\0' , max_lon) ; 
         scanf("%[^\n]s" , command) ;
 
-        /*
-        token = strtok (command , delimit) ; 
 
-        i=0; 
-        while (token != NULL) 
-        {
-            ptr [i++ ] = token ; 
-            token = strtok (NULL , delimit) ;  
-        }  
-        ptr[i] = NULL; 
-        */
-
-
-        struct command cmd = {ABUF_INIT,ABUF_INIT ,ABUF_INIT , NULL , 0  }; 
+        struct command cmd;
+        initCommand (&cmd); 
 
         parser (command , &cmd); 
 
-        parsercommand (&cmd); 
+
+        //printcommand(&cmd);
 
         if (strcmp (command , "exit") == 0 )
         {            
             flag =  0;  
         }
-        else if (strcmp(cmd.cmd.b, "cd")==0)
+        else if (strcmp(cmd.cmd, "cd")==0)
         {
-            if (cmd.argv[1].b) 
+            if (cmd.argv[1]) 
             {
-                if (chdir (cmd.argv[1].b)!=0)
+                if (chdir (cmd.argv[1])!=0)
                 {
-                    printf ("Error : %s  no existe o no se puede cambiar a este directorio ", cmd.argv[1].b );    
+                    printf ("Error : %s  no existe o no se puede cambiar a este directorio ", cmd.argv[1] );    
                 }
                 else 
                 {
@@ -184,27 +200,30 @@ int main (void) {
             }
             else if (process == 0 )
             {
-
-                if (cmd.output.b )
+                if (cmd.input)
                 {
-                    
+                    close(STDIN_FILENO);
+                    open(cmd.input , O_RDONLY,S_IRUSR);
+                }
+
+                if (cmd.output)
+                {
                     close (STDOUT_FILENO);
-                    open (cmd.output.b ,O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU); 
+
+                    if (cmd.outappend) 
+                    {
+                        open (cmd.output ,O_CREAT|O_WRONLY|O_APPEND, S_IRWXU); 
+                    }
+                    else
+                    {
+                        open (cmd.output ,O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU); 
+                    }
+                    
                 }
+                
+                execvp (cmd.argv[0] , cmd.argv ) ;  
 
-                char * arg [cmd.numArgv+1] ; 
-                int i ; 
-                for (i = 0 ; i< cmd.numArgv ; i++ )
-                {
-                    arg [i] = cmd.argv[i].b; 
-                }
-                arg[i] = NULL ;
-
-
-
-                execvp (arg[0] , arg ) ;  
-
-                exit (1) ; 
+                exit (1); 
             }
             else 
             {
