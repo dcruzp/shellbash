@@ -11,7 +11,7 @@
 #define max_lon 100 
 
 
-struct command 
+typedef struct  
 {
     char *cmd ; 
     char *input ; 
@@ -19,10 +19,10 @@ struct command
     char **argv ;
     int numArgv ; 
     int outappend ; 
-};
+}command;
 
 
-char command [max_lon] ; 
+char input [max_lon] ; 
 
 /*Variables de ambiente */
 char SHELL [max_lon];
@@ -49,7 +49,7 @@ int matchcharacter (char c , char * str)
     return 0 ; 
 }
 
-void parser (char * input ,struct  command *cmd )
+void parser (char * input , command *cmd )
 {
     int i  , len ;  
     char * str = "<>\0"; 
@@ -112,7 +112,7 @@ void parser (char * input ,struct  command *cmd )
 } 
 
 
-void initCommand (struct command * cmd )
+void initCommand ( command * cmd )
 {
     cmd-> cmd = NULL; 
     cmd-> input = NULL ; 
@@ -124,10 +124,44 @@ void initCommand (struct command * cmd )
 
 
 
+command ** listcommand  (char * line , command ** cmds  , int * numb)
+{   
+    char **comandos = NULL ; 
+    char *token = NULL; 
+    char delimit [] = "|";
+    int num = 0 , i ; 
+    command * aux ;
 
+    token = strtok (line , delimit); 
+     
+    while (token != NULL) 
+    {
+        comandos = realloc (comandos , (sizeof (char * )) *(num +1 ) ); 
+        comandos [num] = token ; 
+        token = strtok (NULL , delimit); 
+        num ++ ; 
+    }
 
+    for (i=0 ; i< num ; i++)
+    {
+        aux = NULL ; 
+        aux = realloc (aux , sizeof (command) ) ; 
+        initCommand (aux); 
+        
+        parser( *(comandos + i ) , aux); 
+        
+        cmds = realloc (cmds , sizeof (command) * (i+1)); 
+        cmds[i] = aux ; 
+    }
 
-void printcommand (struct command * cmd )
+    cmds = realloc (cmds ,sizeof(command) * (num +1) ); 
+    cmds [num] = NULL;
+    *numb = num ;  
+
+    return cmds ;   
+} 
+
+void printcommand ( command * cmd )
 {
     printf ("comando-> %s\n" , cmd->cmd );
     printf ("input  -> %s\n" , cmd->input );
@@ -141,6 +175,77 @@ void printcommand (struct command * cmd )
     }
 } 
 
+
+void execute  ( command * cmd1 , command *  cmd2)
+{
+    //printcommand (cmd1); 
+    int tuberia[2]; 
+    int pid1 , pid2; 
+    int status1 , status2; 
+
+    if (pipe (tuberia) == -1 )
+    {
+        perror ("Error al crear la tuberia ") ;
+        exit (-1) ; 
+    }
+
+    if ((pid1 = fork()) == -1 ) 
+    {
+        perror ("Error al crear el proceso hijo  ") ;
+        exit (-1) ; 
+    }
+    else if (pid1 == 0)
+    {
+        //estoy en el hijo 
+
+        close (tuberia [0]);
+        close (1);
+        dup (tuberia [1]) ; 
+        close (tuberia [1]);
+
+        execvp(cmd1->argv[0], cmd1->argv); 
+
+        exit(-1); 
+        
+    }
+    else 
+    {
+        //estoy en el padre 
+
+        close (tuberia[1]);
+        
+        if ((pid2 = fork()) == -1 ) 
+        {
+            perror ("Error al crear el proceso hijo  ") ;
+            exit (-1) ; 
+        }
+        else if (pid2 == 0)
+        {
+            close (0);
+            dup(tuberia[0]); 
+            close(tuberia[0]);
+
+            if (cmd2 == NULL)
+            {
+                execlp ("cat" , "cat" , NULL); 
+                exit(-1); 
+            } 
+
+            execvp(cmd2->argv[0] , cmd2->argv);
+
+            exit (-1); 
+        }
+        else 
+        {
+            close (tuberia [0]) ;
+            waitpid (pid1 , &status1,0);
+            waitpid (pid2, &status2, 0); 
+        }        
+    }
+}
+
+command **cmd;
+int numb ;
 
 int main (void) {
     
@@ -156,24 +261,29 @@ int main (void) {
         printf("%s$ " , "Shell"); 
         __fpurge (stdin); 
 
-        memset (command , '\0' , max_lon) ; 
-        scanf("%[^\n]s" , command) ;
+        memset (input , '\0' , max_lon) ; 
+        scanf("%[^\n]s" , input) ;
 
 
-        struct command cmd;
-        initCommand (&cmd); 
-
-        parser (command , &cmd); 
-
-
+        
+        //initCommand (&cmd); 
+        //parser (input , &cmd); 
         //printcommand(&cmd);
+        cmd = NULL ;
+        cmd = listcommand (input , cmd , &numb ); 
 
-        if (strcmp (command , "exit") == 0 )
+
+        //printf("%s\n" , input); 
+       
+        
+        if (strcmp (input , "exit") == 0 )
         {            
             flag =  0;  
         }
+        /*
         else if (strcmp(cmd.cmd, "cd")==0)
         {
+            
             if (cmd.argv[1]) 
             {
                 if (chdir (cmd.argv[1])!=0)
@@ -185,10 +295,12 @@ int main (void) {
                     getcwd (PWD ,max_lon);
                 }
             } 
+            
         }
+        */
         else
         {
-
+            /*
             pid_t process ; 
 
             process = fork () ; 
@@ -200,6 +312,9 @@ int main (void) {
             }
             else if (process == 0 )
             {
+                     
+                /*******************esto es para la entrada y la salida del proceso *********************/    
+                /*
                 if (cmd.input)
                 {
                     close(STDIN_FILENO);
@@ -218,10 +333,10 @@ int main (void) {
                     {
                         open (cmd.output ,O_CREAT|O_WRONLY|O_TRUNC, S_IRWXU); 
                     }
-                    
+                        
                 }
-                
-                execvp (cmd.argv[0] , cmd.argv ) ;  
+                    
+                execvp (cmd[0]->argv[0] , cmd[0]->argv ) ;  
 
                 exit (1); 
             }
@@ -229,6 +344,9 @@ int main (void) {
             {
                 pid_t wc  = wait(NULL) ; 
             }
+            */
+    
+            execute (cmd[0] , cmd[1]) ; 
         }        
     }
     return 0 ; 

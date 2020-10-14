@@ -3,14 +3,14 @@
 #include <string.h> 
 
 
-struct command 
+typedef struct  
 {
     char *cmd ; 
     char *input ; 
     char *output ; 
     char **argv ;
     int numArgv ; 
-};
+}command;
 
 
 int matchcharacter (char c , char * str) 
@@ -23,7 +23,7 @@ int matchcharacter (char c , char * str)
     return 0 ; 
 }
 
-void parser (char * input ,struct  command *cmd )
+void parser (char * input , command *cmd )
 {
     int i  , len ;  
     char * str = "<>\0"; 
@@ -40,7 +40,7 @@ void parser (char * input ,struct  command *cmd )
         if (*(input + i ) == '>')
         {
             
-            if (*(input + i + 1 ) == '>')printf ("macheo"); 
+            if (*(input + i + 1 ) == '>')
             {
                 printf ("%s\n" , "check") ; 
                 i++;
@@ -66,9 +66,25 @@ void parser (char * input ,struct  command *cmd )
             }
         }
     }
+
+    char * token ,delimit [] = " "  ; 
+    token = strtok( cmd->cmd  , delimit);
+    
+    
+    while (token != NULL)
+    {
+        cmd->argv = realloc (cmd->argv , sizeof (char * ) * (cmd ->numArgv + 1 ));
+        cmd->argv [cmd->numArgv] = token ; 
+        cmd->numArgv ++ ; 
+        token = strtok (NULL , delimit);
+    }
+
+    cmd->argv = realloc (cmd->argv , sizeof (char*)* (cmd->numArgv + 1));
+    cmd->argv [cmd->numArgv] = NULL ; 
+
 } 
 
-void printcommand (struct command * cmd )
+void printcommand (command * cmd )
 {
     printf ("comando-> %s\n" , cmd->cmd );
     printf ("input  -> %s\n" , cmd->input );
@@ -83,7 +99,7 @@ void printcommand (struct command * cmd )
 } 
 
 
-void parsercommand (struct command * cmd)
+void parsercommand (command * cmd)
 {
     char * token ,delimit [] = " "  ; 
     token = strtok( cmd->cmd  , delimit);
@@ -101,7 +117,7 @@ void parsercommand (struct command * cmd)
     cmd->argv [cmd->numArgv] = NULL ; 
 }
 
-void initCommand (struct command * cmd )
+void initCommand ( command * cmd )
 {
     cmd-> cmd = NULL; 
     cmd-> input = NULL ; 
@@ -110,10 +126,49 @@ void initCommand (struct command * cmd )
     cmd-> numArgv = 0 ; 
 } 
 
+
+
+command ** partirredireccion  (char * line , command ** cmds  , int * numb)
+{   
+    char **comandos = NULL ; 
+    char *token = NULL; 
+    char delimit [] = "|";
+    int num = 0 , i ; 
+    command * aux ;
+
+    token = strtok (line , delimit); 
+     
+    while (token != NULL) 
+    {
+        comandos = realloc (comandos , (sizeof (char * )) *(num +1 ) ); 
+        comandos [num] = token ; 
+        token = strtok (NULL , delimit); 
+        num ++ ; 
+    }
+
+    for (i=0 ; i< num ; i++)
+    {
+        aux = NULL ; 
+        aux = realloc (aux , sizeof (command) ) ; 
+        initCommand (aux); 
+        
+        parser( *(comandos + i ) , aux); 
+        
+        cmds = realloc (cmds , sizeof (command) * (i+1)); 
+        cmds[i] = aux ; 
+    }
+
+    printf("%s\n" , cmds[0]->cmd); 
+
+    *numb = num ;  
+
+    return cmds ;   
+} 
+
 int main (void) 
 {
     
-    
+    /*
     char *command = " ls -l /usr/bin < input.txt > output.txt"; 
     
     struct command cmd ;
@@ -123,9 +178,19 @@ int main (void)
 
     parsercommand (&cmd) ; 
     
-    printcommand (&cmd);  
-    
+    //printcommand (&cmd);  
+    */
 
+
+    char line[] = "grep foo file | wc -l" ;
+    command ** list; 
+    int numb ; 
+    
+   
+    list  = partirredireccion (line, list , &numb); 
+
+    if (list == NULL ) printf ("es NULL"); 
+    printf ("%s\n" , list[1] -> cmd ) ; 
     return 0 ; 
 
 } 
