@@ -30,14 +30,8 @@ char PATH [max_lon];
 char HOME [max_lon]; 
 char PWD [max_lon];  
 
-/*Otras variables necesarias */ 
-char * ptr [10]  , *token ; 
-char delimit [] = " "  ;  
-int flag = 1  , i ; 
-
-char *redir [3] ; 
-
-
+/*bandera de control del ciclo principal */ 
+int flag = 1; 
 
 int matchcharacter (char c , char * str) 
 {
@@ -52,9 +46,13 @@ int matchcharacter (char c , char * str)
 void parser (char * input , command *cmd )
 {
     int i  , len ;  
-    char * str = "<>\0"; 
+    char * str = "#<>\0"; 
 
-    for (i=0 , len =0 ;! matchcharacter (*(input +i ) , str);i++ )
+    input = strtok (input , "#"); 
+
+    for (i=0 ; !matchcharacter(*(input+i), str) && *(input+i)== ' ' ; i++ ); 
+
+    for ( len =0 ;! matchcharacter (*(input +i ) , str);i++ )
     {
         cmd->cmd = realloc (cmd ->cmd, sizeof (char ) * (len +1)); 
         cmd->cmd [len] = *(input + i ) ;
@@ -178,7 +176,6 @@ void printcommand ( command * cmd )
 
 void execute  ( command * cmd1 , command *  cmd2)
 {
-    //printcommand (cmd1); 
     int tuberia[2]; 
     int pid1 , pid2; 
     int status1 , status2; 
@@ -213,7 +210,7 @@ void execute  ( command * cmd1 , command *  cmd2)
         //estoy en el padre 
 
         close (tuberia[1]);
-        
+
         if ((pid2 = fork()) == -1 ) 
         {
             perror ("Error al crear el proceso hijo  ") ;
@@ -264,31 +261,23 @@ int main (void) {
         memset (input , '\0' , max_lon) ; 
         scanf("%[^\n]s" , input) ;
 
-
-        
-        //initCommand (&cmd); 
-        //parser (input , &cmd); 
-        //printcommand(&cmd);
         cmd = NULL ;
         cmd = listcommand (input , cmd , &numb ); 
-
-
-        //printf("%s\n" , input); 
        
         
-        if (strcmp (input , "exit") == 0 )
+        if (numb == 1 && strcmp (cmd[0]-> cmd , "exit") == 0 )
         {            
             flag =  0;  
         }
-        /*
-        else if (strcmp(cmd.cmd, "cd")==0)
+        
+        else if (numb == 1 && strcmp(cmd[0] -> cmd, "cd")==0)
         {
             
-            if (cmd.argv[1]) 
+            if (cmd[0]->argv[1]) 
             {
-                if (chdir (cmd.argv[1])!=0)
+                if (chdir (cmd[0]->argv[1])!=0)
                 {
-                    printf ("Error : %s  no existe o no se puede cambiar a este directorio ", cmd.argv[1] );    
+                    printf ("Error : %s  no existe o no se puede cambiar a este directorio ", cmd[0]->argv[1] );    
                 }
                 else 
                 {
@@ -297,7 +286,6 @@ int main (void) {
             } 
             
         }
-        */
         else
         {
             /*
