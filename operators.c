@@ -7,7 +7,6 @@ Cmd* InitCmd()
     Cmd* cmd = (Cmd*)malloc(sizeof(Cmd));
 
     cmd->CmdArgc = 0;
-    cmd->CmdArgv = (t_cmd_argv)malloc(sizeof(t_cmd_argv));
     cmd->CmdInPath = "";
     cmd->CmdLiteral = "";
     cmd->CmdOutPath = "";
@@ -42,9 +41,9 @@ Chain* InitChain()
 }
 */
 
-IfConditional* InitIFConditional()
+IFConditional* InitIFConditional()
 {
-    IfConditional* _ifCond = (IfConditional*)malloc(sizeof(IfConditional));
+    IFConditional* _ifCond = (IFConditional*)malloc(sizeof(IFConditional));
 
     _ifCond->_If = NULL;
     _ifCond->_Then = NULL;
@@ -104,6 +103,13 @@ void Pipe_SInsert(Pipe_S* pipeS, ExpressionNode* exprNode)
     }
     
     pipeS->Count++;
+}
+
+void Pipe_SInsert(Pipe_S* pipeS, Expression* expr)
+{
+    ExpressionNode* exprNode = InitExpressionNode();
+    exprNode->Expr = expr;
+    Pipe_SInsert(pipeS, exprNode);
 }
 
 ExpressionNode* Pipe_SGet(Pipe_S* pipeS)

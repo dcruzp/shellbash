@@ -13,7 +13,7 @@
 //  definir tipos de encadenamientos
 #define AND_CHAIN 0
 #define OR_CHAIN 1
-#define CHAIN 2
+#define END_CHAIN 2
 
 //  definir tipos de operacion
 #define OP_IF 0

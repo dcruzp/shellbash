@@ -41,12 +41,12 @@ typedef struct Chain{
 /***
  * Guarda las partes de la sentencia if
 */
-typedef struct IfConditional{
+typedef struct IFConditional{
     Expression* _If;
     Expression* _Then;
     Expression* _Else;
     t_has_else HasElse;
-} IfConditional;
+} IFConditional;
 
 /***
  * Esta estructura es para tratar a todos los
@@ -57,7 +57,7 @@ typedef struct Expression{
     t_expr_type ExprType;
     t_chain_type _Chain;
     Pipe_S* PipeS;
-    IfConditional* _IfCond;
+    IFConditional* _IfCond;
     Cmd* _Cmd;
 } Expression;
 
@@ -79,12 +79,13 @@ Cmd* InitCmd();
 CmdNode* InitCmdNode();
 Pipe_S* InitPipe_S();
 //Chain* InitChain();
-IfConditional* InitIFConditional();
+IFConditional* InitIFConditional();
 Expression* InitExpression();
 ExpressionNode* InitExpressionNode();
 ExpressionList* InitExpressionList();
 
 void Pipe_SInsert(Pipe_S* pipeS, ExpressionNode* exprNode);//Insert a commnad into pipe queue
+void Pipe_SInsert(Pipe_S* pipeS, Expression* expr);
 ExpressionNode* Pipe_SGet(Pipe_S* pipeS);              //Get next command in pipe queue
 
 void ExpressionListInsert(ExpressionList* exprL, ExpressionNode* node);

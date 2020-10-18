@@ -7,10 +7,14 @@
 
 void Parse(TokenList* tl, ExpressionList* superExpr);
 
+void BuildExpression(TokenList* tl, Expression* expr);
+
 void BuildIf(TokenList* tl, Expression* ifExpr);
 
 void BuildPipe(TokenList* tl, Expression* pipeExpr);
 
 void BuildCmd(TokenList* tl, Expression* cmdExpr);
+
+int IsReserved(char* word);
 
 #endif

@@ -8,6 +8,7 @@ void Parse(TokenList* tl, ExpressionList* superExpr)
 {
     superExpr = InitExpressionList();
     int expectWord = TRUE;
+    int wasBG = FALSE;
     while (tl->Count > 0)
     {
         Expression* currExpr = InitExpression();
@@ -16,21 +17,23 @@ void Parse(TokenList* tl, ExpressionList* superExpr)
 
         if(expectWord && currToken->Type != WORD)
         {
-            // Enexpected token, cmd or if expected
+            // Unexpected token, cmd or if expected
             exit(EXIT_FAILURE);
         }
-
-        if(expectWord && !strcmp(currToken->Literal, "if"))
+        if(!expectWord && currToken->Type == WORD)
         {
-            BuildIf(tl, currExpr);
-            ExpressionListInsert(superExpr, currExpr);
-            expectWord = FALSE;
-            continue;
+            // Unexpected token, cmd or if expected
+            exit(EXIT_FAILURE);
         }
 
         if(expectWord && currToken->Type == WORD)
         {
+            currExpr->ExprType = OP_PIPE;
             BuildPipe(tl, currExpr);
+            if(currExpr->PipeS->bg)
+            {
+                wasBG = TRUE;
+            }
             ExpressionListInsert(superExpr, currExpr);
             expectWord = FALSE;
             continue;
@@ -38,41 +41,176 @@ void Parse(TokenList* tl, ExpressionList* superExpr)
 
         if(currToken->Type == OPERATOR)
         {
-            if (strcmp(currToken->Literal, ";"))
-            {
-                currToken = GetHeadToken(tl);
+            currExpr->ExprType = OP_CHAIN;
+            if (!strcmp(currToken->Literal, ";"))
+            {                
+                currExpr->_Chain = END_CHAIN;
+                wasBG = FALSE;
             }
-            else if (strcmp(currToken->Literal, "&&"))
+            else if(wasBG)
             {
-                currExpr->ExprType = AND_CHAIN;
+                // Invalid expression after &
+                exit(EXIT_FAILURE);
             }
-            else if (strcmp(currToken->Literal, "||"))
+            else if (!strcmp(currToken->Literal, "&&"))
             {
-                currExpr->ExprType = OR_CHAIN;
+                currExpr->_Chain = AND_CHAIN;
+            }
+            else if (!strcmp(currToken->Literal, "||"))
+            {
+                currExpr->_Chain = OR_CHAIN;
             }
             else
             {
                 // Invalid token in expression, expected &&, || or ;
                 exit(EXIT_FAILURE);
             }
-            
+
+            ExpressionListInsert(superExpr, currExpr);
+            currToken = GetHeadToken(tl);
             free(currToken);
-            free(currExpr);
             expectWord = TRUE;
             continue;
         }
 
         //  Invalid input token, expected &&, || or ;
         exit(EXIT_FAILURE);
-    }
-    
+    }    
 
-    exit(EXIT_SUCCESS);
 }
 
-void BuildIf(TokenList* tl, Expression* ifExpr);
+void BuildIf(TokenList* tl, Expression* ifExpr)
+{
+    if (tl == NULL || tl->Count == 0)
+    {
+        // Bad call to BuildIf
+        exit(EXIT_FAILURE);
+    }
 
-void BuildPipe(TokenList* tl, Expression* pipeExpr);
+    Token* currToken = GetHeadToken(tl);
+    IFConditional* _if = InitIFConditional();
+    
+    if (currToken == NULL || strcmp(currToken->Literal, "if"))
+    {
+        // Bad call to buildIf
+        exit(EXIT_FAILURE);
+    }
+
+    free(currToken);
+    Expression* _Pipe = InitExpression();
+    _Pipe->ExprType = OP_PIPE;
+    
+    // lo que va entre el if y el then
+    BuildPipe(tl, _Pipe);
+    if (_Pipe->PipeS->bg)
+    {
+        // Invalid expression after &
+        exit(EXIT_FAILURE);
+    }
+    _if->_If = _Pipe;
+
+    currToken = tl->Head->Tok;
+
+    if(currToken == NULL || strcmp(currToken->Literal, "then"))
+    {
+        // Invalid syntax, 'then' expected
+        exit(EXIT_FAILURE);
+    }
+    
+    free(currToken);
+    _Pipe = InitExpression();
+    _Pipe->ExprType = OP_PIPE;
+    
+    //Lo que va despues del then
+    BuildPipe(tl, _Pipe);
+    if (_Pipe->PipeS->bg)
+    {
+        // Invalid expression after &
+        exit(EXIT_FAILURE);
+    }
+    _if->_Then = _Pipe;
+
+    currToken = tl->Head->Tok;
+
+    if(currToken != NULL && !strcmp(currToken->Literal, "else"))
+    {
+        free(currToken);
+        _if->HasElse = TRUE;
+        _Pipe = InitExpression();
+        _Pipe->ExprType = OP_PIPE;
+        BuildPipe(tl, _Pipe);
+        if (_Pipe->PipeS->bg)
+        {
+            // Invalid expression after &
+            exit(EXIT_FAILURE);
+        }
+        _if->_Else = _Pipe;
+        currToken = tl->Head->Tok;
+    }
+
+    if(currToken == NULL || strcmp(currToken->Literal, "end"))
+    {
+        // Invalid syntax, 'end' expected
+        exit(EXIT_FAILURE);
+    }
+
+    ifExpr->_IfCond = _if;
+
+}
+
+void BuildPipe(TokenList* tl, Expression* pipeExpr)
+{
+    if(tl == NULL || tl->Count == 0)
+    {
+        // Bad call to BuildPipe
+        exit(EXIT_FAILURE);
+    }
+
+    Token* currToken = tl->Head->Tok;
+    if (currToken->Type != WORD)
+    {
+        // Invalid syntax, if or command expected
+        exit(EXIT_FAILURE);
+    }
+
+    Pipe_S* _pipe = InitPipe_S();    
+    
+    while (tl->Count > 0)
+    {
+        Expression* currExpr = InitExpression();
+        if(!strcmp(currToken->Literal, "if"))
+        {
+            currExpr->ExprType = OP_IF;
+            BuildIf(tl, currExpr);
+        }
+        else
+        {
+            currExpr->ExprType = OP_CMD;
+            BuildCmd(tl, currExpr);
+        }
+
+        Pipe_SInsert(_pipe, currExpr);
+        currToken = tl->Head->Tok;
+
+        if(currToken == NULL || strcmp(currToken->Literal, "|"))
+        {
+            break;
+        }
+        currToken = GetHeadToken(tl);
+        free(currToken);
+        currToken = tl->Head->Tok;
+    }
+
+    if(currToken != NULL && !strcmp(currToken->Literal, "&"))
+    {
+        currToken = GetHeadToken(tl);
+        free(currToken);
+        _pipe->bg = TRUE;
+    }
+    
+    pipeExpr->PipeS = _pipe;
+    
+}
 
 void BuildCmd(TokenList* tl, Expression* cmdExpr)
 {
@@ -102,6 +240,11 @@ void BuildCmd(TokenList* tl, Expression* cmdExpr)
     while (tl->Count > 0)
     {
         currToken = tl->Head->Tok;
+        if (IsReserved(currToken->Literal))
+        {
+            cmdExpr->_Cmd = cmd;
+            return;
+        }
         if (currToken->Type == WORD || currToken->Type == QUOTED)
         {
             InsertArg(cmd, currToken->Literal);
@@ -178,8 +321,18 @@ void BuildCmd(TokenList* tl, Expression* cmdExpr)
             free(currToken);
             continue;
         }
-        //sigue aqui
+        else if(IsReserved(currToken->Literal))
+        {
+            break;
+        }
+        else
+        {
+            // Operator expected
+            exit(EXIT_FAILURE);
+        }
+        
     }
     
+    cmdExpr->_Cmd = cmd;
 
 }
