@@ -1,1 +1,6 @@
 *.o
+build
+*.txt
+*.cpp
+*.exe
+*.json
