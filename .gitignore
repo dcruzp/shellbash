@@ -1,1 +1,7 @@
-*.o
+*.[cho]
+.vscode/
+*.sh
+!execute.sh
+!mishell.h
+!parser.h
+*.txt

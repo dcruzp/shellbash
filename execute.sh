@@ -1,1 +1,1 @@
-gcc mishell.c -o mishell.o && ./mishell.o
+gcc parser.c mishell.c -o mishell.o && ./mishell.o
