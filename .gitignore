@@ -1,9 +1,5 @@
 *.[cho]
-.vscode/
-*.sh
-!execute.sh
-!mishell.h
-!parser.h
-!execute.c
-!execute.h 
+.vscode/ 
 *.txt
+!cases.txt
+!includes.*
