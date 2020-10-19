@@ -1,12 +1,5 @@
-#include <stdio.h> 
 #include <stdio_ext.h>
-#include <string.h> 
-#include <unistd.h> 
-#include <sys/types.h> 
-#include <sys/wait.h> 
-#include <stdlib.h>
-#include <fcntl.h>
-#include "parser.h"
+#include "execute.h"
 
 #define max_lon 1000
 

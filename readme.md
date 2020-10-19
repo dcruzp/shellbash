@@ -13,7 +13,7 @@ El main del proyecto esta en el fichero mishell.c
 ### Como ejecuto el programa
 
 ```
-./execute.sh
+./run
 ```
 
 #### direccion del repositorio

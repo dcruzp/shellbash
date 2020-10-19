@@ -163,36 +163,3 @@ command ** listcommand  (char * line , command ** cmds  , int * numb)
 
     return cmds ;   
 } 
-
-void printcommand (command * cmd )
-{
-    printf ("comando-> %s\n" , cmd->cmd );
-    printf ("input  -> %s\n" , cmd->input );
-    printf ("output -> %s\n" , cmd->output); 
-
-    printf ("Arguments:\n");
-    int i ; 
-    for ( i= 0 ; i< cmd ->numArgv ; i++)
-    {
-        printf ("%s\n", cmd->argv [i]); 
-    }
-} 
-
-
-/*
-int main (void) 
-{
-    char line[] = "grep foo file | wc -l" ;
-    command ** list; 
-    int numb = 0 ; 
-    
-   
-    list  = listcommand (line, list , &numb); 
-
-    int i ; 
-    for ( i = 0 ; i < numb ; i++)
-    {
-        printcommand(*(list +i));
-    }
-    return 0 ; 
-} */

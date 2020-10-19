@@ -4,4 +4,6 @@
 !execute.sh
 !mishell.h
 !parser.h
+!execute.c
+!execute.h 
 *.txt
