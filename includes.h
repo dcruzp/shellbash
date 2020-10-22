@@ -461,3 +461,11 @@ void False();
  * 
  */
 void _Exit_();
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//handlers
+
+/**
+ * @brief Para modificar SIGINT en los procesos.
+ */
+void CtrlHandler(int sig);

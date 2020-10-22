@@ -813,7 +813,7 @@ void Execute(ExpressionList *exprL)
     if (exprL->Count == 0)
     {
         // no commands to execute
-        exit(EXIT_FAILURE);
+        return;
     }
 
     int lastStatus = 0;
@@ -826,8 +826,8 @@ void Execute(ExpressionList *exprL)
         Expression *currExpr = currNode->Expr;
         if (_pipe && currExpr->ExprType != OP_PIPE)
         {
-            // invalid syntax
-            exit(EXIT_FAILURE);
+            perror("Invalid syntax");
+            return;
         }
 
         if (_pipe)
@@ -835,7 +835,8 @@ void Execute(ExpressionList *exprL)
             int proc = fork();
             if (proc == 0)
             {
-                //child proccess
+                
+                //child proccess              
                 ExecutePipe(currExpr);
             }
 
@@ -865,7 +866,7 @@ void Execute(ExpressionList *exprL)
             else
             {
                 perror("unexpected behaivor");
-                exit(EXIT_FAILURE);
+                return;
             }
             chain = NONE;
             free(currNode);
@@ -875,7 +876,7 @@ void Execute(ExpressionList *exprL)
         if (!_pipe && currExpr->ExprType != OP_CHAIN)
         {
             perror("unexpected behaivor");
-            exit(EXIT_FAILURE);
+            return;
         }
 
         if (!_pipe)
@@ -1048,6 +1049,7 @@ void ExecutePipe(Expression *pipeExpr)
         pid_t cpid = fork();
         if (cpid == 0)
         {
+            signal(SIGINT, CtrlHandler);
             if(currExpr->ExprType == OP_CMD)
             {
                 ExecuteCmd(currExpr, inFd, outFd);
@@ -1063,7 +1065,7 @@ void ExecutePipe(Expression *pipeExpr)
             }
             
         }
-
+        signal(SIGINT, SIG_IGN);
         int status;
         wait(&status);
         if(!status)
@@ -1160,17 +1162,13 @@ void ExecuteBuiltIn(Expression* cmdExpr)
 
         if (cmdExpr->_Cmd->CmdArgc !=2) 
         {
-            perror ("Broken cd "); 
+            perror ("cd must has exactly one argument");
             exit(EXIT_FAILURE); 
         }
         else
         {
-            if (chdir(cmdExpr->_Cmd->CmdArgv[1]))
-            {
-                printf("No exits directorio or is missing : %s\n" , cmdExpr->_Cmd->CmdArgv[1]);
-            }
+            Cd(cmdExpr->_Cmd);
         }
-        exit (0); 
     }
     else if (!strcmp(cmd , "exit"))
     {
@@ -1265,4 +1263,19 @@ void _Exit_()
         perror("No se pudo ejecutar exit");
     }
     exit(EXIT_FAILURE);
+}
+
+void Cd(Cmd* cmdExpr)
+{
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//handlers
+
+
+void CtrlHandler(int sig)
+{
+    printf("\nPresione Ctrl+c nuevamente para terminar proceso\n");
+    signal(SIGINT, SIG_DFL);
 }
