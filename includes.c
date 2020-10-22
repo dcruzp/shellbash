@@ -832,17 +832,9 @@ void Execute(ExpressionList *exprL)
 
         if (_pipe)
         {
-            int proc = fork();
-            if (proc == 0)
-            {
-                
-                //child proccess              
-                ExecutePipe(currExpr);
-            }
+            
+            currStatus = ExecutePipe(currExpr);
 
-            waitpid(proc, &currStatus, 0);
-
-            currStatus = !currStatus;
             _pipe = FALSE;
 
             if (chain == NONE)
@@ -918,92 +910,48 @@ void ExecuteIf(Expression *IfExpr, int inFd, int outFd)
 
     int ifStatus = TRUE;
     IFConditional* _if = IfExpr->_IfCond;
-    int cpid = fork();
-    if(cpid < 0)
-    {
-        perror("Error while forking inside if");
-        exit(EXIT_FAILURE);
-    }
-    if (cpid == 0)
-    {
-        ExecutePipe(_if->_If);
-    }
-    else
-    {
-        // Esperar para saber que status devuelve el if
-        int status;
-        wait(&status);
+    
+    ifStatus = ExecutePipe(_if->_If);
 
+    // Si ifStatus es TRUE ejecutar el then.
+    if(ifStatus)
+    {
+        
+        int status = ExecutePipe(_if->_Then);
+        
+        // esperar a ver que devuelve el then.
         if(status)
         {
-            ifStatus = FALSE;
+            exit(EXIT_SUCCESS);
         }
-
-        // Si ifStatus es TRUE ejecutar el then.
-        if(ifStatus)
+        else
         {
-            cpid = fork();
-            if(cpid < 0)
-            {
-                perror("Error while forking inside if");
-                exit(EXIT_FAILURE);
-            }
-            if (cpid == 0)
-            {
-                ExecutePipe(_if->_Then);
-            }
-            else
-            {
-                // esperar a ver que devuelve el then.
-                wait(&status);
-                if(WIFEXITED(status))
-                {
-                    exit(EXIT_SUCCESS);
-                }
-                else
-                {
-                    exit(EXIT_FAILURE);
-                }                
-            }
-            
-        }
-        else if(_if->HasElse) // Si el if retorna FALSE entonces ejecutar el else si es que tiene.
+            exit(EXIT_FAILURE);
+        }        
+        
+    }
+    else if(_if->HasElse) // Si el if retorna FALSE entonces ejecutar el else si es que tiene.
+    {
+        int status = ExecutePipe(_if->_Else);
+        
+        // esperar a ver que devuelve el then.
+        if(status)
         {
-            cpid = fork();
-            if(cpid < 0)
-            {
-                perror("Error while forking inside if");
-                exit(EXIT_FAILURE);
-            }
-            if (cpid == 0)
-            {
-                ExecutePipe(_if->_Else);
-            }
-            else
-            {
-                // esperar a ver que devuelve el then.
-                wait(&status);
-                if(WIFEXITED(status))
-                {
-                    exit(EXIT_SUCCESS);
-                }
-                else
-                {
-                    exit(EXIT_FAILURE);
-                }                
-            }
+            exit(EXIT_SUCCESS);
         }
-        else    // En caso de que el if sea falso y no haya Else retornar falso.
+        else
         {
             exit(EXIT_FAILURE);
         }
-        
+    }
+    else    // En caso de que el if sea falso y no haya Else retornar falso.
+    {
+        exit(EXIT_FAILURE);
     }
     
-    exit(EXIT_FAILURE);
 }
 
-void ExecutePipe(Expression *pipeExpr)
+int ExecutePipe(Expression *pipeExpr)
 {
     int fdPipe[2], inFd, outFd, lastStatus,
         backupStdin = dup(STDIN_FILENO), backupStdout = dup(STDOUT_FILENO);
@@ -1011,7 +959,7 @@ void ExecutePipe(Expression *pipeExpr)
     if (pipeExpr == NULL || pipeExpr->PipeS->Count == 0)
     {
         perror("Unexpected behaivor");
-        exit(EXIT_FAILURE);
+        return FALSE;
     }
 
     ExpressionNode *currNode = Pipe_SGet(pipeExpr->PipeS);
@@ -1032,7 +980,7 @@ void ExecutePipe(Expression *pipeExpr)
             if (pp < 0)
             {
                 perror("Error pipying");
-                exit(EXIT_FAILURE);
+                return FALSE;
             }
 
             if (outFd == STDOUT_FILENO)
@@ -1065,6 +1013,7 @@ void ExecutePipe(Expression *pipeExpr)
             }
             
         }
+
         signal(SIGINT, SIG_IGN);
         int status;
         wait(&status);
@@ -1114,7 +1063,12 @@ void ExecutePipe(Expression *pipeExpr)
 
     //int status;
     //wait(&status);
-    exit(lastStatus);
+    if(lastStatus)
+    {
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 void ExecuteCmd(Expression *cmdExpr, int inFd, int outFd)

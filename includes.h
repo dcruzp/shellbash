@@ -411,8 +411,10 @@ void ExecuteIf(Expression* IfExpr, int inFd, int outFd);
  * @brief Sabe como ejecutar una Expression de tipo Pipe_S.
  * 
  * @param pipeExpr Expression de tipo Pipe_S a ejecutar.
+ * 
+ * @return int Retorna TRUE pudo ejecutar todo el pipe.
  */
-void ExecutePipe(Expression* pipeExpr); 
+int ExecutePipe(Expression* pipeExpr); 
 
 /**
  * @brief Sabe ejecutar un Expression de tipo Cmd.
