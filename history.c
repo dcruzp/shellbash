@@ -124,37 +124,31 @@ void appendCommand (char * cmd)
         perror ("fopen") ;
         exit (EXIT_FAILURE); 
     } 
-    
-    i=0 ;
-    while ((nread = getline(&hist[i] , & len , stream)) != -1 && i++ < lenHistory)
+
+    for (i=0; i < lenHistory ; i++)
     {
-        //if (hist[i][strlen(hist[i])-1]== '\n') hist[i][strlen(hist[i])-1] = '\0';
-        
+        nread = getline(&hist[i] , &len , stream) ;
+        if (nread == -1 ) break ;
     }
-    count = i ;  
+    count = i ;
 
     fclose (stream) ;
-
     
-    
-    if (count > lenHistory )
+    if (count >= lenHistory )
     {
-        
         for (i =0 ; i < lenHistory -1 ; i++)
         {
             hist[i] = hist[i+1];
-            
         }
         hist [i] = cmd ; 
     }
     else 
     {
-        hist[count++] = cmd ; 
+        hist[count] = cmd ;
+        count ++ ;  
     }
-
     
     fopen(fileHistory , "w") ;
-    //printf("%i\n" , count); 
     for (i=0 ; i <count ; i++)
     {
         int j =0 ; 
@@ -165,28 +159,12 @@ void appendCommand (char * cmd)
         }
         fputc('\n' ,(FILE*)stream);
     }
-    
      
     fclose(stream); 
 } 
 
 void readHistory1 ()
 {
-    /*
-    char line [1024] ; 
-    FILE *fich ; 
-    int i ; 
-
-    fich = fopen(fileHistory , "r");
-
-    i = 0 ; 
-    while (fgets (line , 1024 , (FILE * )fich))
-    {
-        printf( "%i :%s" , ++i ,line) ; 
-    }
-    fclose(fich) ;
-    */
-
     FILE *stream ; 
     char * line = NULL ;
     size_t len = 0 ; 
@@ -206,19 +184,25 @@ void readHistory1 ()
         printf( "%li :%s" , ++i ,line );
         
     }
-    //printf("\n");
     free (line); 
     fclose(stream); 
     exit(EXIT_SUCCESS);
-    
 } 
 
 
 char * cmd ; 
 int main(int argc , char **argv ) {
     
-    printf("%d\n" , argc) ; 
-
-    readHistory1(); 
+    if (argc == 1)
+    {
+        //printf("%s\n", argv[0]);
+        readHistory1();
+    }
+    else if (argc ==2 )
+    {
+        //printf("%s\n" , argv[1]);
+        appendCommand(argv[1]); 
+    }
+    //appendCommand("alfredo"); 
     return 0;
 }

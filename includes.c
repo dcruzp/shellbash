@@ -1147,7 +1147,7 @@ void ExecuteBuiltIn(Expression* cmdExpr)
     }
     else if (!strcmp(cmd , "history" ))
     {
-        execlp("./history.o", "./history.o" , "ls", NULL );
+        execlp("./history.o", "./history.o", NULL );
     }
     else
     {
