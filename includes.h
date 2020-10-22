@@ -455,3 +455,9 @@ void True();
  * 
  */
 void False();
+
+/**
+ * @brief Termina inmediatemente el shell.
+ * 
+ */
+void _Exit_();

@@ -5,6 +5,7 @@
 
 const char *OPERATORS[OPSLEN] = {"<", ">", "&", "|", ";", "`", ">>", "&&", "||"};
 const char *BUILTINS[BUILTINLEN] = {"true", "false" , "cd" , "exit" , "history" };
+pid_t shellId;
 
 void Tokenize(const char *buf, TokenList *tl)
 {
@@ -1173,7 +1174,7 @@ void ExecuteBuiltIn(Expression* cmdExpr)
     }
     else if (!strcmp(cmd , "exit"))
     {
-        
+        _Exit_();
     }
     else if (!strcmp(cmd , "history" ))
     {
@@ -1253,5 +1254,15 @@ void True()
 
 void False()
 {
+    exit(EXIT_FAILURE);
+}
+
+void _Exit_()
+{
+    int error = kill(shellId, SIGKILL);
+    if(error)
+    {
+        perror("No se pudo ejecutar exit");
+    }
     exit(EXIT_FAILURE);
 }
