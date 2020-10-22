@@ -14,10 +14,13 @@
  * ExpressionList* exprL = InitExpressionList();
  * 
  * //Convertir la lista de tokens tl en la lista de ExpressionNode ejecutables exprL
- * Parse(tl, exprL);
+ * int parseSuccess = Parse(tl, exprL);
  * 
- * //Ejecutar la lista de ExpressionNode exprL
- * Execute(exprL); 
+ * if(parseSuccess)
+ * {
+ *      //Ejecutar la lista de ExpressionNode exprL
+ *      Execute(exprL); 
+ * }
  */
 
 /**
@@ -323,8 +326,10 @@ void InsertArg(Cmd* cmd, char* arg);
  * 
  * @param tl Lista de Tokens
  * @param superExpr Lista de ExpressionNode a devolver.
+ * 
+ * @return int retorna TRUE si el parseo fue exitoso
  */
-void Parse(TokenList* tl, ExpressionList* superExpr);
+int Parse(TokenList* tl, ExpressionList* superExpr);
 
 /**
  * @brief Convierte tokens en Expressions.
@@ -339,24 +344,30 @@ void BuildExpression(TokenList* tl, Expression* expr);
  * 
  * @param tl Lista de Tokens
  * @param ifExpr La Expression a devolver
+ * 
+ * @return int retorna TRUE si el parseo fue exitoso
  */
-void BuildIf(TokenList* tl, Expression* ifExpr);
+int BuildIf(TokenList* tl, Expression* ifExpr);
 
 /**
  * @brief Construye una Expression de tipo Pipe_S de una lista de tokens.
  * 
  * @param tl Lista de Tokens
  * @param pipeExpr La Expression a devolver
+ * 
+ * @return int retorna TRUE si el parseo fue exitoso
  */
-void BuildPipe(TokenList* tl, Expression* pipeExpr, t_expected expect);
+int BuildPipe(TokenList* tl, Expression* pipeExpr, t_expected expect);
 
 /**
  * @brief Construye una Expression de tipo Cmd de una lista de tokens.
  * 
  * @param tl Lista de Tokens
  * @param ifcmdExpr La Expression a devolver
+ * 
+ * @return int retorna TRUE si el parseo fue exitoso
  */
-void BuildCmd(TokenList* tl, Expression* cmdExpr);
+int BuildCmd(TokenList* tl, Expression* cmdExpr);
 
 /**
  * @brief Devuelve TRUE si el string es una palabra reservada.
