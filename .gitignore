@@ -7,3 +7,4 @@
 !example.c 
 *.sh
 !runexample.sh
+!help/doc/*.txt

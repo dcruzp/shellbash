@@ -1,0 +1,2 @@
+El comando exit termina inmediatemente la ejecución del shell, esto lo implementamos enviando una
+señal SIGINT al shell, de modo que esta no pueda ser capturada.

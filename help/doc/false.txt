@@ -1,0 +1,1 @@
+Este comando especial solo devuelve false(exit status 1).
