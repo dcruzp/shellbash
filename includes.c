@@ -417,40 +417,43 @@ void InsertArg(Cmd *cmd, char *arg)
 
 
 // parser.c
-void Parse(TokenList *tl, ExpressionList *superExpr)
+int Parse(TokenList *tl, ExpressionList *superExpr)
 {
-    //superExpr = InitExpressionList();
     int expectWord = TRUE;
     int wasBG = FALSE;
+
     while (tl->Count > 0)
     {
-        ////printf("Inside the parse while\n");
-
         Expression *currExpr = InitExpression();
         Token *currToken = InitToken();
         currToken = tl->Head->Tok;
-        //printf("currToken: %s\n", currToken->Literal);
+
         if (expectWord && currToken->Type != WORD)
         {
             perror("Unexpected token, cmd or if expected");
-            exit(EXIT_FAILURE);
+            return FALSE;
         }
         if (!expectWord && currToken->Type == WORD)
         {
             perror("Unexpected token, cmd or if expected");
-            exit(EXIT_FAILURE);
+            return FALSE;
         }
 
         if (expectWord && currToken->Type == WORD)
         {
             currExpr->ExprType = OP_PIPE;
-            BuildPipe(tl, currExpr, IFEXPECTED);
+            int builPipe_ = BuildPipe(tl, currExpr, IFEXPECTED);
+            if(!builPipe_)
+            {
+                return FALSE;
+            }
+
             if (currExpr->PipeS->bg)
             {
                 wasBG = TRUE;
             }
+
             ExpressionListInsertE(superExpr, currExpr);
-            ////printf("SuperExprCount : %i\n", superExpr->Count);
             expectWord = FALSE;
             continue;
         }
@@ -466,7 +469,7 @@ void Parse(TokenList *tl, ExpressionList *superExpr)
             else if (wasBG)
             {
                 perror("Invalid expression after &");
-                exit(EXIT_FAILURE);
+                return FALSE;
             }
             else if (!strcmp(currToken->Literal, "&&"))
             {
@@ -479,7 +482,7 @@ void Parse(TokenList *tl, ExpressionList *superExpr)
             else
             {
                 perror("Invalid token in expression, expected &&, || or ;");
-                exit(EXIT_FAILURE);
+                return FALSE;
             }
 
             ExpressionListInsertE(superExpr, currExpr);
@@ -490,19 +493,19 @@ void Parse(TokenList *tl, ExpressionList *superExpr)
         }
 
         perror("Invalid input token, expected &&, || or ;");
-        exit(EXIT_FAILURE);
+        return FALSE;
     }
 
-    ////printf("SuperExprCount : %i\n", superExpr->Count);
+    return TRUE;
 }
 
-void BuildIf(TokenList *tl, Expression *ifExpr)
+int BuildIf(TokenList *tl, Expression *ifExpr)
 {
     //nullhere
     if (tl->Count == 0)
     {
         perror("Bad call to BuildIf");
-        exit(EXIT_FAILURE);
+        return FALSE;
     }
 
     Token *currToken = GetHeadToken(tl);
@@ -512,7 +515,7 @@ void BuildIf(TokenList *tl, Expression *ifExpr)
     if (strcmp(currToken->Literal, "if"))
     {
         perror("Bad call to buildIf");
-        exit(EXIT_FAILURE);
+        return FALSE;
     }
 
     free(currToken);
@@ -520,11 +523,16 @@ void BuildIf(TokenList *tl, Expression *ifExpr)
     _Pipe->ExprType = OP_PIPE;
 
     // lo que va entre el if y el then
-    BuildPipe(tl, _Pipe, THENEXPECTED);
+    int buildPipe_ = BuildPipe(tl, _Pipe, THENEXPECTED);
+    if(!buildPipe_)
+    {
+        return FALSE;
+    }
+    
     if (_Pipe->PipeS->bg)
     {
         perror("Invalid expression after &");
-        exit(EXIT_FAILURE);
+        return FALSE;
     }
     _if->_If = _Pipe;
 
@@ -533,7 +541,7 @@ void BuildIf(TokenList *tl, Expression *ifExpr)
     if (currToken == NULL || strcmp(currToken->Literal, "then"))
     {
         perror("Invalid syntax, 'then' expected");
-        exit(EXIT_FAILURE);
+        return FALSE;
     }
 
     currToken = GetHeadToken(tl);
@@ -542,11 +550,16 @@ void BuildIf(TokenList *tl, Expression *ifExpr)
     _Pipe->ExprType = OP_PIPE;
 
     //Lo que va despues del then
-    BuildPipe(tl, _Pipe, ENDEXPECTED);
+    buildPipe_ = BuildPipe(tl, _Pipe, ENDEXPECTED);
+    if(!buildPipe_)
+    {
+        return FALSE;
+    }
+
     if (_Pipe->PipeS->bg)
     {
         // Invalid expression after &
-        exit(EXIT_FAILURE);
+        return FALSE;
     }
     _if->_Then = _Pipe;
 
@@ -559,11 +572,16 @@ void BuildIf(TokenList *tl, Expression *ifExpr)
         _if->HasElse = TRUE;
         _Pipe = InitExpression();
         _Pipe->ExprType = OP_PIPE;
-        BuildPipe(tl, _Pipe, ENDEXPECTED);
+        buildPipe_ = BuildPipe(tl, _Pipe, ENDEXPECTED);
+        if(!buildPipe_)
+        {
+            return FALSE;
+        }
+
         if (_Pipe->PipeS->bg)
         {
             perror("Invalid expression after &");
-            exit(EXIT_FAILURE);
+            return FALSE;
         }
         _if->_Else = _Pipe;
         currToken = tl->Head->Tok;
@@ -572,37 +590,42 @@ void BuildIf(TokenList *tl, Expression *ifExpr)
     if (currToken == NULL || strcmp(currToken->Literal, "end"))
     {
         perror("Invalid syntax, 'end' expected");
-        exit(EXIT_FAILURE);
+        return FALSE;
     }
     
     currToken = GetHeadToken(tl);
     ifExpr->_IfCond = _if;
+    return TRUE;
 }
 
-void BuildPipe(TokenList *tl, Expression *pipeExpr, t_expected expect)
+int BuildPipe(TokenList *tl, Expression *pipeExpr, t_expected expect)
 {
     if (tl == NULL || tl->Count == 0)
     {
         perror("Bad call to BuildPipe");
-        exit(EXIT_FAILURE);
+        return FALSE;
     }
 
     Token *currToken = tl->Head->Tok;
     if (currToken->Type != WORD)
     {
         perror("Invalid syntax, if or command expected");
-        exit(EXIT_FAILURE);
+        return FALSE;
     }
 
     Pipe_S *_pipe = InitPipe_S();
-    //printf("Inside BuildPipe currToken: %s\n", currToken->Literal);
+
     while (tl->Count > 0)
     {
         Expression *currExpr = InitExpression();
         if (!strcmp(currToken->Literal, "if"))
         {
             currExpr->ExprType = OP_IF;
-            BuildIf(tl, currExpr);
+            int buildIf_ = BuildIf(tl, currExpr);
+            if(!buildIf_)
+            {
+                return FALSE;
+            }
         }
         else if(expect == THENEXPECTED && !strcmp(currToken->Literal, "then"))
         {
@@ -615,7 +638,11 @@ void BuildPipe(TokenList *tl, Expression *pipeExpr, t_expected expect)
         else
         {
             currExpr->ExprType = OP_CMD;
-            BuildCmd(tl, currExpr);
+            int buildCmd_ = BuildCmd(tl, currExpr);
+            if(!buildCmd_)
+            {
+                return FALSE;
+            }
         }
 
         Pipe_SInsertE(_pipe, currExpr);
@@ -636,25 +663,25 @@ void BuildPipe(TokenList *tl, Expression *pipeExpr, t_expected expect)
         free(currToken);
         _pipe->bg = TRUE;
     }
-    //printf("pipe count: %i\n", _pipe->Count);
+
     pipeExpr->PipeS = _pipe;
+    return TRUE;
 }
 
-void BuildCmd(TokenList *tl, Expression *cmdExpr)
+int BuildCmd(TokenList *tl, Expression *cmdExpr)
 {
-    //printf("Inside BuildCmd\n");
     if (tl == NULL || tl->Count == 0)
     {
         perror("Invalid action trying to build command");
-        exit(EXIT_FAILURE);
+        return FALSE;
     }
 
     Token *currToken = GetHeadToken(tl);
 
     if (currToken->Type != WORD)
     {
-        perror(" Syntax error command expected");
-        exit(EXIT_FAILURE);
+        perror("Syntax error command expected");
+        return FALSE;
     }
 
     Cmd *cmd = InitCmd();
@@ -673,7 +700,7 @@ void BuildCmd(TokenList *tl, Expression *cmdExpr)
         if (IsReserved(currToken->Literal))
         {
             cmdExpr->_Cmd = cmd;
-            return;
+            return TRUE;
         }
         if (currToken->Type == WORD || currToken->Type == QUOTED)
         {
@@ -698,7 +725,7 @@ void BuildCmd(TokenList *tl, Expression *cmdExpr)
             if (!expectOperator)
             {
                 perror("Invalid syntax, redirection arg expected");
-                exit(EXIT_FAILURE);
+                return FALSE;
             }
             if (!strcmp(currToken->Literal, ">"))
             {
@@ -731,7 +758,7 @@ void BuildCmd(TokenList *tl, Expression *cmdExpr)
             if (currToken == NULL || (currToken->Type != WORD && currToken->Type != QUOTED))
             {
                 perror("Invalid syntax, redirection argument expected");
-                exit(EXIT_FAILURE);
+                return FALSE;
             }
 
             if (inpath)
@@ -747,7 +774,7 @@ void BuildCmd(TokenList *tl, Expression *cmdExpr)
             else
             {
                 perror("oh oh! something went wrong");
-                exit(EXIT_FAILURE);
+                return FALSE;
             }
 
             free(currToken);
@@ -760,11 +787,14 @@ void BuildCmd(TokenList *tl, Expression *cmdExpr)
         else
         {
             perror("Operator expected");
-            exit(EXIT_FAILURE);
+            return FALSE;
         }
+
     }
 
     cmdExpr->_Cmd = cmd;
+
+    return TRUE;
 }
 
 // execute.c
