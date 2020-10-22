@@ -1,17 +1,10 @@
 #include "includes.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/wait.h>
+
 
 //#define EXIT_FAILURE 1
 
 const char *OPERATORS[OPSLEN] = {"<", ">", "&", "|", ";", "`", ">>", "&&", "||"};
-const char *BUILTINS[2] = {"true", "false"};
+const char *BUILTINS[BUILTINLEN] = {"true", "false" , "cd" , "exit" , "history" };
 
 void Tokenize(const char *buf, TokenList *tl)
 {
@@ -1113,6 +1106,7 @@ void ExecuteCmd(Expression *cmdExpr, int inFd, int outFd)
         execvp(cmdExpr->_Cmd->CmdLiteral, cmdExpr->_Cmd->CmdArgv);
     }
 
+    
     perror("Problam executing non built-in command");
     exit(EXIT_FAILURE);
 }
@@ -1128,6 +1122,32 @@ void ExecuteBuiltIn(Expression* cmdExpr)
     else if(!strcmp(cmd, "false"))
     {
         False();
+    }
+    else if (!strcmp(cmd , "cd"))
+    {   
+        //printf("entro en el cd ");
+
+        if (cmdExpr->_Cmd->CmdArgc !=2) 
+        {
+            perror ("Broken cd "); 
+            exit(EXIT_FAILURE); 
+        }
+        else
+        {
+            if (chdir(cmdExpr->_Cmd->CmdArgv[1]))
+            {
+                printf("No exits directorio or is missing : %s\n" , cmdExpr->_Cmd->CmdArgv[1]);
+            }
+        }
+        exit (0); 
+    }
+    else if (!strcmp(cmd , "exit"))
+    {
+        
+    }
+    else if (!strcmp(cmd , "history" ))
+    {
+        execlp("./history.o", "./history.o" , "ls", NULL );
     }
     else
     {

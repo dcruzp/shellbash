@@ -3,3 +3,5 @@
 *.txt
 !cases.txt
 !includes.*
+!history.c
+*.sh

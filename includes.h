@@ -21,6 +21,20 @@
  */
 
 /**
+ * Includes 
+ */
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+
+/**
  * Define token types
 */
 #define WORD 0
@@ -52,7 +66,7 @@
 #define FALSE 0
 #define TRUE 1
 #define OPSLEN 9    // longitud del array constante de operadores que se encuentra al inicio de includes.c
-#define BUILTINLEN 2    // longitud del array constante de built-ins que se encuentra al inicio de includes.c
+#define BUILTINLEN 5   // longitud del array constante de built-ins que se encuentra al inicio de includes.c
 
 
 typedef int t_type;             // Tipo de token (WORD, OPERATOR, QUOTED, SINGLEQUOTED).
