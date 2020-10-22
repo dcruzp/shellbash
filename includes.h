@@ -471,3 +471,5 @@ void _Exit_();
  * @brief Para modificar SIGINT en los procesos.
  */
 void CtrlHandler(int sig);
+
+void Cd(Cmd* cmdExpr);
