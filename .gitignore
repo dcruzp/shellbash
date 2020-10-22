@@ -4,4 +4,6 @@
 !cases.txt
 !includes.*
 !history.c
+!example.c 
 *.sh
+!runexample.sh
