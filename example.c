@@ -18,7 +18,10 @@ void guardarcmd (char * cmd )
     }
     else if (pid == 0) 
     {
-        execlp("./history.o" , "./history.o" , cmd , NULL) ; 
+        char buf [PWD_LEN] = "\0";
+        strcat(buf , pwd);
+        strcat(buf , PATH_HISTORY);
+        execlp(buf , buf , cmd , NULL) ; 
     }
     else 
     {
@@ -27,11 +30,11 @@ void guardarcmd (char * cmd )
     
 }
 
-/*
+
 void createexecutehistory()
 {
     int pid ;
-    if( pid = fork()== -1)
+    if( (pid = fork())== -1)
     {
         perror("Error fork ");
         exit(EXIT_FAILURE);
@@ -41,9 +44,13 @@ void createexecutehistory()
          
         char buf [PWD_LEN] = "\0";
         strcat(buf, pwd); 
-        strcat(buf, "./history.sh");
+        chdir(buf);
+        strcat(buf, "/history.sh");
         //printf("%s\n" , buf) ;
-        execlp(buf , buf , NULL);
+        if (execlp(buf , buf , NULL)==-1)
+        {
+            printf("hubo un error\n");
+        }
     }
     else
     {
@@ -51,12 +58,12 @@ void createexecutehistory()
     }
     
 }
-*/
-/*
+
+
 void createexecutehelp()
 {
     int pid ;
-    if( pid = fork()== -1)
+    if( (pid = fork())== -1)
     {
         perror("Error fork ");
         exit(EXIT_FAILURE);
@@ -74,14 +81,14 @@ void createexecutehelp()
         wait (NULL);
     }
     
-}*/
+}
 
 int main () {
 
     signal(SIGINT, SIG_IGN);
     getcwd (pwd ,1000); 
-    //createexecutehistory();
-    //createexecutehelp();
+    createexecutehistory();
+    createexecutehelp();
 
     while (flag)
     {
