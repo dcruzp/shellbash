@@ -40,7 +40,7 @@
  * enviroment 
  */
 #define PWD_LEN 10000
-//char pwd  [PWD_LEN] ; 
+char pwd  [PWD_LEN] ; 
 
 /**
  * Path directions 

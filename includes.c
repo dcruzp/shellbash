@@ -1324,7 +1324,7 @@ void History()
 
     for (size_t i = 0; i < count; i++)
     {
-        printf("%i: %s\n", (i+1), histArray[i]);
+        printf("%li: %s\n", (i+1), histArray[i]);
     }
 
     for (size_t i = 0; i < 10; i++)
