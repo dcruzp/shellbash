@@ -181,7 +181,7 @@ void readHistory1 ()
     i=0;
     while ((nread = getline(&line , & len , stream)) != -1)
     {
-        printf( "%li :%s" , ++i ,line );
+        printf( "%li: %s" , ++i ,line );
         
     }
     free (line); 
@@ -195,14 +195,11 @@ int main(int argc , char **argv ) {
     
     if (argc == 1)
     {
-        //printf("%s\n", argv[0]);
         readHistory1();
     }
     else if (argc ==2 )
     {
-        //printf("%s\n" , argv[1]);
         appendCommand(argv[1]); 
     }
-    //appendCommand("alfredo"); 
     return 0;
 }

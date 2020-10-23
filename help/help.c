@@ -3,18 +3,24 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define lenpath 10000
 
 
-void showcmdhelp (char * cmd )
+void showcmdhelp (char * path , char * cmd )
 {
     FILE *stream ;
     char *line = NULL ; 
     size_t len = 0; 
     ssize_t nread ;
 
-    char dir [1000] = "doc/"; 
+    
+    char dir [lenpath] = "\0";
+    strcat(dir,path);
+    strcat(dir,"/help/doc/") ;
     strcat(dir , cmd);
     strcat(dir, ".txt");
+
+    printf("%s\n" , dir);
 
 
     stream = fopen(dir , "r");
@@ -37,13 +43,13 @@ void showcmdhelp (char * cmd )
 int main (int argc , char ** argv )
 {
     
-    if (argc == 1 )
+    if (argc == 2 )
     {
-        showcmdhelp("help");
+        showcmdhelp(argv[1], "help");
     }
     else 
     {
-        showcmdhelp(argv[1]);
+        showcmdhelp(argv[1],argv[2]);
     }
 
     return 0  ; 

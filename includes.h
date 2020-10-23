@@ -37,11 +37,17 @@
 #include <sys/wait.h>
 
 /**
- * some variable enviroment
+ * enviroment 
+ */
+#define PWD_LEN 10000
+char pwd  [PWD_LEN] ; 
+
+/**
+ * Path directions 
  */
 
-
-
+#define PATH_HELP "/help/help.o"
+#define PATH_HISTORY "/history.o"
 
 /**
  * Define token types
