@@ -5,14 +5,14 @@
 
 const char *OPERATORS[OPSLEN] = {"<", ">", "&", "|", ";", "`", ">>", "&&", "||"};
 
-const char *BUILTINS[BUILTINLEN] = {"true", "false" , "cd" , "exit" , "history" , "help"};
+const char *BUILTINS[BUILTINLEN] = {"true", "false" , "cd" , "exit" , "history" , "help", "again"};
 
 pid_t shellId;
 char* shellDir;
 char histDir[2048];
-char* currWDir; 
-char* helpDir;
-
+char currWDir[2048]; 
+char helpDir[2048];
+int ctrl;
 
 
 void Tokenize(const char *buf, TokenList *tl)
@@ -706,7 +706,7 @@ int BuildCmd(TokenList *tl, Expression *cmdExpr)
     while (tl->Count > 0)
     {
         currToken = tl->Head->Tok;
-        if (IsReserved(currToken->Literal))
+        if (IsReserved(currToken->Literal) && strcmp(cmd->CmdLiteral, "help"))
         {
             cmdExpr->_Cmd = cmd;
             return TRUE;
@@ -1000,38 +1000,46 @@ int ExecutePipe(Expression *pipeExpr)
                 close(fdPipe[1]);
             }
         }
-
-        //execute cmd or if
-        pid_t cpid = fork();
-        if (cpid == 0)
+        if(currExpr->ExprType == OP_CMD && !strcmp(currExpr->_Cmd->CmdLiteral, "cd"))
         {
-            signal(SIGINT, CtrlHandler);
-            if(currExpr->ExprType == OP_CMD)
-            {
-                ExecuteCmd(currExpr, inFd, outFd);
-            }
-            else if (currExpr->ExprType == OP_IF)
-            {
-                ExecuteIf(currExpr, inFd, outFd);
-            }
-            else
-            {
-                perror("Unexpected type of expression in pipe");
-                exit(EXIT_FAILURE);
-            }
-            
-        }
-        int status;
-        wait(&status);
-        signal(SIGINT, SIG_IGN);
-        if(!status)
-        {
-            lastStatus = EXIT_SUCCESS;
+            lastStatus = Cd(currExpr->_Cmd);
         }
         else
         {
-            lastStatus = EXIT_FAILURE;
+                //execute cmd or if
+            pid_t cpid = fork();
+            if (cpid == 0)
+            {
+                signal(SIGINT, CtrlHandler);
+                if(currExpr->ExprType == OP_CMD)
+                {
+                    ExecuteCmd(currExpr, inFd, outFd);
+                }
+                else if (currExpr->ExprType == OP_IF)
+                {
+                    ExecuteIf(currExpr, inFd, outFd);
+                }
+                else
+                {
+                    perror("Unexpected type of expression in pipe");
+                    exit(EXIT_FAILURE);
+                }
+                
+            }
+            int status;
+            wait(&status);
+            signal(SIGINT, SIG_IGN);
+            if(!status)
+            {
+                lastStatus = EXIT_SUCCESS;
+            }
+            else
+            {
+                lastStatus = EXIT_FAILURE;
+            }
+            
         }
+        
         
 
         // restore file descriptors
@@ -1140,11 +1148,11 @@ void ExecuteBuiltIn(Expression* cmdExpr)
     }
     else if (!strcmp(cmd, "help"))
     {
-        
-        char buf [PWD_LEN] = "\0";
-        //strcat(buf,pwd);
-        strcat(buf , PATH_HELP); 
-        //execlp(buf ,buf, pwd , cmdExpr->_Cmd->CmdArgv[1] , NULL);
+        Help(cmdExpr->_Cmd);
+    }
+    else if(!strcmp(cmd, "again"))
+    {
+        Again(cmdExpr->_Cmd);
     }
     else
     {
@@ -1183,7 +1191,7 @@ int GetOutfd(Expression *cmdExpr)
         }
         else
         {
-            outfd = open(cmdExpr->_Cmd->CmdOutPath, O_CREAT | O_WRONLY , S_IRWXU);
+            outfd = open(cmdExpr->_Cmd->CmdOutPath, O_CREAT | O_TRUNC | O_WRONLY , S_IRWXU);
         }
 
         if (outfd < 0)
@@ -1234,21 +1242,33 @@ void _Exit_()
 }
 
 
-void Cd(Cmd* cmdExpr)
+
+int Cd(Cmd* cmdExpr)
 {
     if (cmdExpr->CmdArgv[1])
     {
-        printf("Llego aqui");
         if (chdir(cmdExpr->CmdArgv[1])!=0)
         {
-            printf ("Error : %s  don't exist this directory or is busy ", cmdExpr->CmdArgv[1] ); 
+            perror("No fue posible cambiar de directorio");
+            return FALSE;
         }
         else
         {
-            printf("cambio el directorio");
+            int size = pathconf(".", _PC_PATH_MAX);
+
+            if((shellDir = (char*)malloc((size_t)size)) != NULL)
+            {
+                getcwd(shellDir, (size_t)size);
+            }
+            else
+            {
+                perror("Crash");
+                return FALSE;
+            }
         }
         
     }
+    return TRUE;
 }
 
 void Again(Cmd* cmdExpr)
@@ -1316,8 +1336,9 @@ void History()
 
 void InitShell()
 {
-    shellId = getpid();
-    
+    shellId = getpid();    
+    ctrl = FALSE;
+
     int size = pathconf(".", _PC_PATH_MAX);
 
     if((shellDir = (char*)malloc((size_t)size)) != NULL)
@@ -1332,9 +1353,9 @@ void InitShell()
 
     int len = strlen(shellDir);
 
-    currWDir = (char*)malloc(len * sizeof(char));
+    //currWDir = (char*)malloc(len * sizeof(char));
     //histDir = (char*)malloc((len + 5) * sizeof(char));
-    helpDir = (char*)malloc((len + 10) * sizeof(char));
+    //helpDir = (char*)malloc((len + 10) * sizeof(char));
 
     memcpy(currWDir, shellDir, len);
     memcpy(histDir, shellDir, len);
@@ -1393,8 +1414,8 @@ void WriteToHistory(char* cmd)
     }
 
     int count = ReadFromHistory(histArray);
-    printf("%s\n",histDir);
-    int fd = open(histDir, O_CREAT | O_WRONLY , S_IRWXU);
+    
+    int fd = open(histDir, O_CREAT | O_TRUNC | O_WRONLY , S_IRWXU);
 
     if(fd < 0)
     {
@@ -1423,14 +1444,68 @@ void WriteToHistory(char* cmd)
     close(fd);
 }
 
+void Help(Cmd* cmdExpr)
+{
+    int fd;
+    char aux[2024];
+    memcpy(aux, helpDir, strlen(helpDir));
+
+    if(cmdExpr->CmdArgc > 2)
+    {
+        perror("Demasiados argumentos, se esperaba 0 o 1");
+        exit(EXIT_FAILURE);
+        
+    }
+    else if(cmdExpr->CmdArgc == 1)
+    {
+        strcat(aux, "help");
+    }
+    else
+    {
+        strcat(aux, cmdExpr->CmdArgv[1]);
+    }
+
+    fd = open(aux, O_RDONLY, S_IRUSR);
+    if(fd < 0)
+    {
+        perror("No existe la ayda solicitada");
+        exit(EXIT_FAILURE);
+    } 
+
+    char buf[2048];
+    char help_[2048];
+    int count = 0;
+    int index = 0;
+    while((count = read(fd, buf, 2048)) > 0)
+    {
+        for (size_t i = 0; i < count; i++)
+        {
+            help_[index] = buf[i];
+            index++;
+        }        
+    }
+    help_[index] = '\0';
+    printf("%s\n", help_);
+    close(fd);
+    exit(EXIT_SUCCESS);
+    
+
+
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //handlers
 
 
 void CtrlHandler(int sig)
 {
-    printf("\nPresione Ctrl+c nuevamente para terminar proceso\n");
-    signal(SIGINT, SIG_DFL);
+    if(ctrl)
+    {
+        kill(getpid(), SIGKILL);
+    }
+    else
+    {
+        ctrl = TRUE;
+    }
 }
 
 

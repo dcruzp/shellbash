@@ -1,0 +1,23 @@
+Funcionalidades básicas del shell:
+
+-Al ejecutar el shell se imprime un pront terminado con el signo $ y un espacio a contnuación
+del cual el usuario puede insertar una línea de comando.
+
+-Al insertar un comando y presionar la tecla Enter este comando será ejecutado y su salida será
+mostrada(en la salida estandar pro defecto).
+
+-El shell es capaz de ejecutar el comando cd y cambiar el directorio de trabajo actual.
+(Para más información sobre cd ejecutar: help cd).
+
+-El shell es capaz de redirigir la entrada y la salida con los operadores <, >, >>.
+    * < redirecciona la entrada del comando al fichero que se especifique a continuación.
+    * > redirecciona la salida del comando al fichero que se especifique a continuación,
+        si este fichero existe entonces será sobreescrito y en caso contrario será creado.
+    * >> funciona parecido a > pero si el fichero existe no lo sobreescribe, sino que agrega
+        el nuevo contenido al final de este.
+
+-Se puede hacer uso de tuberías con el operardor | , el cual conecta la salida del comando
+a su izquierda con la entrada del comando a su derecha.
+
+-Los elementos de la línea de comandos a ejecutar deben estar separados por espacios, en el
+caso específico de este shell la cantidad no importa.

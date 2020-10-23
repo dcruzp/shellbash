@@ -1,0 +1,8 @@
+El comando history mustra los 10 últimos comandos ejecutados en el shell, mostrando
+al final el comando más reciente.
+
+La persistencia del history la implementamos, escribiendo en un fichero llamado hist,
+el cual se actualiza después de cada comando, gracias a esto el history de sesiones
+anteriores no se pierde.
+
+En history no se almacenan comandos que empiezen con espacio.

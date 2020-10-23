@@ -1,4 +1,0 @@
-El shell permite la ejecución de múltiples if en una sola línea, de forma que estos pueden incluso
-estar anidados.
-
-Para más información sobre la expresión if ejecute 'help if'.

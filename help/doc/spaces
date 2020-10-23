@@ -1,0 +1,5 @@
+Todos los espacios en shell serán ignorados a no ser que estos se encuentre entre algún
+tipo de comillas.
+Esto se logra al tomar la linea de entrada del shell y tokenizarla, o sea, convertirla en tokens
+validos analizandola caracter a caracter e ignorando en este proceso todos los espacios que no estén
+dentro de una expresion de comillas.

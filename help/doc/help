@@ -1,0 +1,27 @@
+Integrantes: Daniel de la Cruz y Victor M. Lantigua Comando
+Grupo: C-211
+
+Funcionalidades:
+	basic: Funcionalidades básicas. (3 ptos)
+	multi-pipe: Admitir múltiples tuberías. (1 pto)
+	spaces: Admitir cualquier cantidad de espacios entre los comandos y parámetros. (0.5 ptos)
+	history: Imprimir los últimos 10 comandos. (0.5 ptos)
+	ctrl+c: El shell no termina al recibir ctrl+c. (0.5 ptos)
+	chain: Encadenar varios comandos. (0.5 ptos)
+	if: Expresiones condicionales. (1 pto)
+	multi-if: Múltiples condicionales en una sola línea. (0.5 ptos)
+	help: Imprimir una ayuda. (1 pto)
+
+
+
+Comandos built-in:
+	cd: Cambia de directorio.
+	exit: Sale del shell.
+	history: Imprime los últimos 10 comandos.
+	again: Ejecuta un comando del history.
+	true: Se evalua como true.
+	false: Se evalua como false.
+	if: Comando para control de flujo.
+	help: Imprimir una ayuda.
+
+Total de puntos: 8.0 ptos.

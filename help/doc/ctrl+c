@@ -1,0 +1,6 @@
+Al enviar una señal con ctrl+c esta es ignorada por el shell.
+
+Cuando se ejecuta un proceso el shell configura la señal SIGINT para que esta pueda ser
+ignorada solo una vez ya que en el momento que es ignorada o bloqueada actualiza una
+variable global, la cual le permitira a este handler enviar un SIGKILL a este proceso
+la proxima vez que reciva un SIGNINT.
