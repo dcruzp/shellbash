@@ -36,6 +36,12 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+/**
+ * some variable enviroment
+ */
+
+char pwd  [1000] ; 
+
 
 /**
  * Define token types

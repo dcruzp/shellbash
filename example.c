@@ -29,6 +29,8 @@ void guardarcmd (char * cmd )
 int main () {
 
 
+    getcwd (pwd ,1000); 
+    printf("%s\n" , pwd); 
     while (flag)
     {
 
