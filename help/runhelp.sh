@@ -1,1 +1,1 @@
-gcc help.c -o help.o
+gcc help.c -o help.o && ./help.o

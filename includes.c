@@ -4,7 +4,7 @@
 //#define EXIT_FAILURE 1
 
 const char *OPERATORS[OPSLEN] = {"<", ">", "&", "|", ";", "`", ">>", "&&", "||"};
-const char *BUILTINS[BUILTINLEN] = {"true", "false" , "cd" , "exit" , "history" };
+const char *BUILTINS[BUILTINLEN] = {"true", "false" , "cd" , "exit" , "history" , "help"};
 
 void Tokenize(const char *buf, TokenList *tl)
 {
@@ -1154,9 +1154,7 @@ void ExecuteBuiltIn(Expression* cmdExpr)
         False();
     }
     else if (!strcmp(cmd , "cd"))
-    {   
-        //printf("entro en el cd ");
-
+    {          
         if (cmdExpr->_Cmd->CmdArgc !=2) 
         {
             perror ("Broken cd "); 
@@ -1178,6 +1176,15 @@ void ExecuteBuiltIn(Expression* cmdExpr)
     else if (!strcmp(cmd , "history" ))
     {
         execlp("./history.o", "./history.o", NULL );
+    }
+    else if (!strcmp(cmd, "help"))
+    {
+        
+        /*
+        Nota : aqui tener en cuenta el path global donde se ejecuta el fichero 
+        */
+        chdir("help");
+        execlp("./help.o" , "./help.o" , cmdExpr->_Cmd->CmdArgv[1] , NULL);
     }
     else
     {

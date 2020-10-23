@@ -5,6 +5,8 @@
 !includes.*
 !history.c
 !example.c 
+help/
 *.sh
 !runexample.sh
 !help/doc/*.txt
+

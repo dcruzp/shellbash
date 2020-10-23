@@ -69,7 +69,7 @@
 #define FALSE 0
 #define TRUE 1
 #define OPSLEN 9    // longitud del array constante de operadores que se encuentra al inicio de includes.c
-#define BUILTINLEN 5   // longitud del array constante de built-ins que se encuentra al inicio de includes.c
+#define BUILTINLEN 6   // longitud del array constante de built-ins que se encuentra al inicio de includes.c
 
 
 typedef int t_type;             // Tipo de token (WORD, OPERATOR, QUOTED, SINGLEQUOTED).
