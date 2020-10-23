@@ -8,7 +8,10 @@ const char *OPERATORS[OPSLEN] = {"<", ">", "&", "|", ";", "`", ">>", "&&", "||"}
 const char *BUILTINS[BUILTINLEN] = {"true", "false" , "cd" , "exit" , "history" , "help"};
 
 pid_t shellId;
-char pwd  [1000] ; 
+char* shellDir;
+char histDir[2048];
+char* currWDir; 
+char* helpDir;
 
 
 
@@ -392,7 +395,7 @@ ExpressionNode *ExpressionListGet(ExpressionList *exprL)
     {
         return NULL;
     }
-    //printf("Inside ExpressionListGet\n");
+
     ExpressionNode *auxNode = InitExpressionNode();
 
     auxNode = exprL->Head;
@@ -401,7 +404,7 @@ ExpressionNode *ExpressionListGet(ExpressionList *exprL)
         exprL->Head = auxNode->Next;
         exprL->Head->Prev = NULL;
     }
-    //printf("Inside ExpressionListGet\n");
+    
     auxNode->Next = NULL;
     exprL->Count--;
 
@@ -1132,18 +1135,16 @@ void ExecuteBuiltIn(Expression* cmdExpr)
     }
     else if (!strcmp(cmd , "history" ))
     {
-        char buf [PWD_LEN] = "\0";
-        strcat(buf,pwd);
-        strcat(buf,PATH_HISTORY);
-        execlp(buf, buf, NULL );
+        History();
+        exit(EXIT_FAILURE);
     }
     else if (!strcmp(cmd, "help"))
     {
         
         char buf [PWD_LEN] = "\0";
-        strcat(buf,pwd);
+        //strcat(buf,pwd);
         strcat(buf , PATH_HELP); 
-        execlp(buf ,buf, pwd , cmdExpr->_Cmd->CmdArgv[1] , NULL);
+        //execlp(buf ,buf, pwd , cmdExpr->_Cmd->CmdArgv[1] , NULL);
     }
     else
     {
@@ -1232,6 +1233,7 @@ void _Exit_()
     exit(EXIT_FAILURE);
 }
 
+
 void Cd(Cmd* cmdExpr)
 {
     if (cmdExpr->CmdArgv[1])
@@ -1249,6 +1251,178 @@ void Cd(Cmd* cmdExpr)
     }
 }
 
+void Again(Cmd* cmdExpr)
+{
+    if(cmdExpr->CmdArgc != 2)
+    {
+        perror("Cantidad erronea de argumentos en comando again\n, se esperaba 1");
+        exit(EXIT_FAILURE);
+    }
+
+    int index = atoi(cmdExpr->CmdArgv[1]);
+    
+    char* histArray[10];
+    for (size_t i = 0; i < 10; i++)
+    {
+        histArray[i] = (char*)malloc(sizeof(char) * 2048);
+    }
+
+    int count = ReadFromHistory(histArray);
+    if(index > count || index < 1)
+    {
+        perror("Indice fuera del rango aceptado, vea history");
+        exit(EXIT_FAILURE);
+    }
+
+    char * cmd = histArray[index];
+    WriteToHistory(cmd);
+
+    TokenList* tl = InitTokenList();
+    Tokenize(cmd, tl);
+
+    ExpressionList* exprL = InitExpressionList();
+    int parseSuccess = Parse(tl, exprL);
+
+    if(parseSuccess)
+    {
+        Execute(exprL);
+        exit(EXIT_SUCCESS);
+    }
+    exit(EXIT_FAILURE);
+
+}
+
+void History()
+{
+    char* histArray[10];
+    for (size_t i = 0; i < 10; i++)
+    {
+        histArray[i] = (char*)malloc(sizeof(char) * 2048);
+    }
+
+    int count = ReadFromHistory(histArray);
+
+    for (size_t i = 0; i < count; i++)
+    {
+        printf("%i: %s\n", (i+1), histArray[i]);
+    }
+
+    for (size_t i = 0; i < 10; i++)
+    {
+        free(histArray[i]);
+    }
+    exit(EXIT_SUCCESS);    
+}
+
+void InitShell()
+{
+    shellId = getpid();
+    
+    int size = pathconf(".", _PC_PATH_MAX);
+
+    if((shellDir = (char*)malloc((size_t)size)) != NULL)
+    {
+        getcwd(shellDir, (size_t)size);
+    }
+    else
+    {
+        perror("Crash");
+        exit(EXIT_FAILURE);
+    }
+
+    int len = strlen(shellDir);
+
+    currWDir = (char*)malloc(len * sizeof(char));
+    //histDir = (char*)malloc((len + 5) * sizeof(char));
+    helpDir = (char*)malloc((len + 10) * sizeof(char));
+
+    memcpy(currWDir, shellDir, len);
+    memcpy(histDir, shellDir, len);
+    memcpy(helpDir, shellDir, len);
+
+    char * historyEnd = "/hist";
+    char * helpEnd = "/help/doc/";
+
+    strcat(histDir, historyEnd);
+    strcat(helpDir, helpEnd);
+
+}
+
+int ReadFromHistory(char* histArray[10])
+{
+    int fd = open(histDir, O_RDONLY);
+    int size = 1024;
+    char* buf = (char*)malloc(sizeof(char) * size);
+    int count = 0;
+    int offset = 0;
+    int readed = 0;
+    while ((readed = read(fd, buf, size)) > 0)
+    {
+        for(int i = 0; i < readed; i++)
+        {
+            if(buf[i] == '\n')
+            {
+                count++;
+                offset = 0;
+
+                if(count == 10)
+                {
+                    close(fd);
+                    return count;
+                }
+
+                continue;
+            }
+
+            histArray[count][offset] = buf[i];
+            offset++;
+        }
+    }
+
+    close(fd);
+    return count;  
+    
+}
+
+void WriteToHistory(char* cmd)
+{
+    char* histArray[10];
+    for (size_t i = 0; i < 10; i++)
+    {
+        histArray[i] = (char*)malloc(sizeof(char) * 2048);
+    }
+
+    int count = ReadFromHistory(histArray);
+    printf("%s\n",histDir);
+    int fd = open(histDir, O_CREAT | O_WRONLY , S_IRWXU);
+
+    if(fd < 0)
+    {
+        perror("Error opening history");
+        exit(EXIT_FAILURE);
+    }
+    int i = 0;
+    if(count == 10)
+    {
+        i = 1;
+    }
+
+    for (; i < count; i++)
+    {
+        write(fd, histArray[i], strlen(histArray[i]));
+        write(fd, "\n", 1);
+    }
+
+    write(fd, cmd, strlen(cmd));
+    write(fd, "\n", 1);
+
+    for (size_t i = 0; i < 10; i++)
+    {
+        free(histArray[i]);
+    }
+    close(fd);
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //handlers
 
@@ -1260,8 +1434,3 @@ void CtrlHandler(int sig)
 }
 
 
-void Getcwdir()
-{
-    getcwd (pwd ,1000);
-    printf("%s\n" , pwd);
-}

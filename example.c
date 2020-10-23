@@ -79,11 +79,11 @@ void createexecutehelp()
 int main () {
 
     signal(SIGINT, SIG_IGN);
-    getcwd (pwd ,1000); 
+    InitShell();
     //createexecutehistory();
     //createexecutehelp();
 
-    while (flag)
+    while (TRUE)
     {
 
         printf("%s$ " , "Shell"); 
@@ -92,8 +92,7 @@ int main () {
         memset (input , '\0' , max_lon) ; 
         scanf("%[^\n]s" , input) ;
 
-        guardarcmd(input);
-        
+        WriteToHistory(input);        
         
         
         //inicializar una lista de tokens

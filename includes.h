@@ -40,7 +40,7 @@
  * enviroment 
  */
 #define PWD_LEN 10000
-char pwd  [PWD_LEN] ; 
+//char pwd  [PWD_LEN] ; 
 
 /**
  * Path directions 
@@ -476,6 +476,54 @@ void False();
  */
 void _Exit_();
 
+/**
+ * @brief Mustra los últimos 10 comandos ejecutados.
+ * 
+ */
+void History();
+
+/**
+ * @brief agrega comandos usados al archivo history.
+ * 
+ * @param cmd 
+ */
+void AddToHistory(char* cmd);
+
+/**
+ * @brief Obtiene la direcció desde donde se ejecutó el shell.
+ * 
+ */
+void GetShellDir();
+
+/**
+ * @brief Cambia el directorio de trabajo del shell.
+ * 
+ * @param cmdExpr 
+ */
+void Cd(Cmd* cmdExpr);
+
+/**
+ * @brief Vueleve a ejcutar un comando del historial.
+ * 
+ * @param cmdExpr 
+ */
+void Again(Cmd* cmdExpr);
+
+/**
+ * @brief Lee los comandos del fichero hist.
+ * 
+ * @param histArray Aquí devuelve los comandos.
+ * @return int La cantidad de comandos leidos.
+ */
+int ReadFromHistory(char* histArray[10]);
+
+/**
+ * @brief Lee del fichero hist
+ * 
+ * @param cmd 
+ */
+void WriteToHistory(char* cmd);
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //handlers
 
@@ -484,6 +532,10 @@ void _Exit_();
  */
 void CtrlHandler(int sig);
 
-void Cd(Cmd* cmdExpr);
+/**
+ * @brief Inicializa las variables globales del shell.
+ * 
+ */
+void InitShell();
 
 void Getcwdir();
