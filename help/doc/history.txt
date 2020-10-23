@@ -1,0 +1,5 @@
+Este comando te muestra los ultimos 10 comandos ejecutados enumerados desde 
+1 hasta 10 donde el primero es el que primero se ejcuto 
+
+Cuando se cierra el shell y se vuelve a ejecutar se mantine el acceso a los ultimos 
+comandos ejecutados. 

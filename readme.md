@@ -178,6 +178,12 @@ satisfactoria, no hace falta ejecutar la 2da.Y sólo si la 1ra expression “fal
     * El shell permite la ejecución de múltiples if en una sola línea, de forma que estos pueden incluso
     estar anidados.
 
+11. history
+    * Este comando te muestra los ultimos 10 comandos ejecutados enumerados desde 1 hasta 10 donde el primero es el que primero se ejecuto
+
+    * Cuando se cierra el shell y se vuelve a ejecutar se mantine el acceso a los ultimos
+    comandos ejecutados.
+
 ### Algunos comandos de ejemplo
 
 ```
@@ -186,7 +192,7 @@ satisfactoria, no hace falta ejecutar la 2da.Y sólo si la 1ra expression “fal
     dir
     ls -l | wc
     cat < a.txt > b.txt
-    cat <file.ext>
+    cat readme.md
 ```
 
 #### direccion del repositorio

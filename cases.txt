@@ -1,0 +1,8 @@
+ls -l
+clear
+dir
+ls -l | wc
+cat < a.txt > b.txt
+cat readme.md
+if true then ls -l | less else false end 
+history
