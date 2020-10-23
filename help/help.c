@@ -20,7 +20,6 @@ void showcmdhelp (char * path , char * cmd )
     strcat(dir , cmd);
     strcat(dir, ".txt");
 
-    printf("%s\n" , dir);
 
 
     stream = fopen(dir , "r");
