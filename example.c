@@ -28,7 +28,7 @@ void guardarcmd (char * cmd )
 
 int main () {
 
-
+    signal(SIGINT, SIG_IGN);
     getcwd (pwd ,1000); 
     printf("%s\n" , pwd); 
     while (flag)
@@ -52,15 +52,9 @@ int main () {
         ExpressionList* exprL = InitExpressionList();
     
         //Convertir la lista de tokens tl en la lista de ExpressionNode ejecutables exprL
-        Parse(tl, exprL);
+        int parseSuccess = Parse(tl, exprL);
 
-       
-
-        if (strcmp (input, "exit")== 0 )
-        {
-            flag = 0  ; 
-        }
-        else
+        if(parseSuccess)
         {    
             //Ejecutar la lista de ExpressionNode exprL
             Execute(exprL); 

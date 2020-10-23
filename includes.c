@@ -1018,10 +1018,9 @@ int ExecutePipe(Expression *pipeExpr)
             }
             
         }
-
-        signal(SIGINT, SIG_IGN);
         int status;
         wait(&status);
+        signal(SIGINT, SIG_IGN);
         if(!status)
         {
             lastStatus = EXIT_SUCCESS;
