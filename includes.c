@@ -4,7 +4,11 @@
 //#define EXIT_FAILURE 1
 
 const char *OPERATORS[OPSLEN] = {"<", ">", "&", "|", ";", "`", ">>", "&&", "||"};
+
 const char *BUILTINS[BUILTINLEN] = {"true", "false" , "cd" , "exit" , "history" , "help"};
+
+pid_t shellId;
+
 
 void Tokenize(const char *buf, TokenList *tl)
 {
@@ -812,7 +816,7 @@ void Execute(ExpressionList *exprL)
     if (exprL->Count == 0)
     {
         // no commands to execute
-        exit(EXIT_FAILURE);
+        return;
     }
 
     int lastStatus = 0;
@@ -825,22 +829,15 @@ void Execute(ExpressionList *exprL)
         Expression *currExpr = currNode->Expr;
         if (_pipe && currExpr->ExprType != OP_PIPE)
         {
-            // invalid syntax
-            exit(EXIT_FAILURE);
+            perror("Invalid syntax");
+            return;
         }
 
         if (_pipe)
         {
-            int proc = fork();
-            if (proc == 0)
-            {
-                //child proccess
-                ExecutePipe(currExpr);
-            }
+            
+            currStatus = ExecutePipe(currExpr);
 
-            waitpid(proc, &currStatus, 0);
-
-            currStatus = !currStatus;
             _pipe = FALSE;
 
             if (chain == NONE)
@@ -864,7 +861,7 @@ void Execute(ExpressionList *exprL)
             else
             {
                 perror("unexpected behaivor");
-                exit(EXIT_FAILURE);
+                return;
             }
             chain = NONE;
             free(currNode);
@@ -874,7 +871,7 @@ void Execute(ExpressionList *exprL)
         if (!_pipe && currExpr->ExprType != OP_CHAIN)
         {
             perror("unexpected behaivor");
-            exit(EXIT_FAILURE);
+            return;
         }
 
         if (!_pipe)
@@ -916,92 +913,48 @@ void ExecuteIf(Expression *IfExpr, int inFd, int outFd)
 
     int ifStatus = TRUE;
     IFConditional* _if = IfExpr->_IfCond;
-    int cpid = fork();
-    if(cpid < 0)
-    {
-        perror("Error while forking inside if");
-        exit(EXIT_FAILURE);
-    }
-    if (cpid == 0)
-    {
-        ExecutePipe(_if->_If);
-    }
-    else
-    {
-        // Esperar para saber que status devuelve el if
-        int status;
-        wait(&status);
+    
+    ifStatus = ExecutePipe(_if->_If);
 
+    // Si ifStatus es TRUE ejecutar el then.
+    if(ifStatus)
+    {
+        
+        int status = ExecutePipe(_if->_Then);
+        
+        // esperar a ver que devuelve el then.
         if(status)
         {
-            ifStatus = FALSE;
+            exit(EXIT_SUCCESS);
         }
-
-        // Si ifStatus es TRUE ejecutar el then.
-        if(ifStatus)
+        else
         {
-            cpid = fork();
-            if(cpid < 0)
-            {
-                perror("Error while forking inside if");
-                exit(EXIT_FAILURE);
-            }
-            if (cpid == 0)
-            {
-                ExecutePipe(_if->_Then);
-            }
-            else
-            {
-                // esperar a ver que devuelve el then.
-                wait(&status);
-                if(WIFEXITED(status))
-                {
-                    exit(EXIT_SUCCESS);
-                }
-                else
-                {
-                    exit(EXIT_FAILURE);
-                }                
-            }
-            
-        }
-        else if(_if->HasElse) // Si el if retorna FALSE entonces ejecutar el else si es que tiene.
+            exit(EXIT_FAILURE);
+        }        
+        
+    }
+    else if(_if->HasElse) // Si el if retorna FALSE entonces ejecutar el else si es que tiene.
+    {
+        int status = ExecutePipe(_if->_Else);
+        
+        // esperar a ver que devuelve el then.
+        if(status)
         {
-            cpid = fork();
-            if(cpid < 0)
-            {
-                perror("Error while forking inside if");
-                exit(EXIT_FAILURE);
-            }
-            if (cpid == 0)
-            {
-                ExecutePipe(_if->_Else);
-            }
-            else
-            {
-                // esperar a ver que devuelve el then.
-                wait(&status);
-                if(WIFEXITED(status))
-                {
-                    exit(EXIT_SUCCESS);
-                }
-                else
-                {
-                    exit(EXIT_FAILURE);
-                }                
-            }
+            exit(EXIT_SUCCESS);
         }
-        else    // En caso de que el if sea falso y no haya Else retornar falso.
+        else
         {
             exit(EXIT_FAILURE);
         }
-        
+    }
+    else    // En caso de que el if sea falso y no haya Else retornar falso.
+    {
+        exit(EXIT_FAILURE);
     }
     
-    exit(EXIT_FAILURE);
 }
 
-void ExecutePipe(Expression *pipeExpr)
+int ExecutePipe(Expression *pipeExpr)
 {
     int fdPipe[2], inFd, outFd, lastStatus,
         backupStdin = dup(STDIN_FILENO), backupStdout = dup(STDOUT_FILENO);
@@ -1009,7 +962,7 @@ void ExecutePipe(Expression *pipeExpr)
     if (pipeExpr == NULL || pipeExpr->PipeS->Count == 0)
     {
         perror("Unexpected behaivor");
-        exit(EXIT_FAILURE);
+        return FALSE;
     }
 
     ExpressionNode *currNode = Pipe_SGet(pipeExpr->PipeS);
@@ -1030,7 +983,7 @@ void ExecutePipe(Expression *pipeExpr)
             if (pp < 0)
             {
                 perror("Error pipying");
-                exit(EXIT_FAILURE);
+                return FALSE;
             }
 
             if (outFd == STDOUT_FILENO)
@@ -1047,6 +1000,7 @@ void ExecutePipe(Expression *pipeExpr)
         pid_t cpid = fork();
         if (cpid == 0)
         {
+            signal(SIGINT, CtrlHandler);
             if(currExpr->ExprType == OP_CMD)
             {
                 ExecuteCmd(currExpr, inFd, outFd);
@@ -1063,6 +1017,7 @@ void ExecutePipe(Expression *pipeExpr)
             
         }
 
+        signal(SIGINT, SIG_IGN);
         int status;
         wait(&status);
         if(!status)
@@ -1111,7 +1066,12 @@ void ExecutePipe(Expression *pipeExpr)
 
     //int status;
     //wait(&status);
-    exit(lastStatus);
+    if(lastStatus)
+    {
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 void ExecuteCmd(Expression *cmdExpr, int inFd, int outFd)
@@ -1157,21 +1117,17 @@ void ExecuteBuiltIn(Expression* cmdExpr)
     {          
         if (cmdExpr->_Cmd->CmdArgc !=2) 
         {
-            perror ("Broken cd "); 
+            perror ("cd must has exactly one argument");
             exit(EXIT_FAILURE); 
         }
         else
         {
-            if (chdir(cmdExpr->_Cmd->CmdArgv[1]))
-            {
-                printf("No exits directorio or is missing : %s\n" , cmdExpr->_Cmd->CmdArgv[1]);
-            }
+            Cd(cmdExpr->_Cmd);
         }
-        exit (0); 
     }
     else if (!strcmp(cmd , "exit"))
     {
-        
+        _Exit_();
     }
     else if (!strcmp(cmd , "history" ))
     {
@@ -1261,4 +1217,29 @@ void True()
 void False()
 {
     exit(EXIT_FAILURE);
+}
+
+void _Exit_()
+{
+    int error = kill(shellId, SIGKILL);
+    if(error)
+    {
+        perror("No se pudo ejecutar exit");
+    }
+    exit(EXIT_FAILURE);
+}
+
+void Cd(Cmd* cmdExpr)
+{
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//handlers
+
+
+void CtrlHandler(int sig)
+{
+    printf("\nPresione Ctrl+c nuevamente para terminar proceso\n");
+    signal(SIGINT, SIG_DFL);
 }
