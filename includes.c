@@ -8,7 +8,7 @@ const char *OPERATORS[OPSLEN] = {"<", ">", "&", "|", ";", "`", ">>", "&&", "||"}
 const char *BUILTINS[BUILTINLEN] = {"true", "false" , "cd" , "exit" , "history" , "help"};
 
 pid_t shellId;
-
+char pwd  [1000] ; 
 
 
 
@@ -1180,7 +1180,7 @@ int GetOutfd(Expression *cmdExpr)
         }
         else
         {
-            outfd = open(cmdExpr->_Cmd->CmdOutPath, O_CREAT | O_WRONLY, S_IRWXU);
+            outfd = open(cmdExpr->_Cmd->CmdOutPath, O_CREAT | O_WRONLY , S_IRWXU);
         }
 
         if (outfd < 0)
@@ -1243,4 +1243,11 @@ void CtrlHandler(int sig)
 {
     printf("\nPresione Ctrl+c nuevamente para terminar proceso\n");
     signal(SIGINT, SIG_DFL);
+}
+
+
+void Getcwdir()
+{
+    getcwd (pwd ,1000);
+    printf("%s\n" , pwd);
 }

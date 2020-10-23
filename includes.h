@@ -40,7 +40,7 @@
  * some variable enviroment
  */
 
-char pwd  [1000] ; 
+
 
 
 /**
@@ -479,3 +479,5 @@ void _Exit_();
 void CtrlHandler(int sig);
 
 void Cd(Cmd* cmdExpr);
+
+void Getcwdir();
