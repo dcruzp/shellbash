@@ -1132,16 +1132,18 @@ void ExecuteBuiltIn(Expression* cmdExpr)
     }
     else if (!strcmp(cmd , "history" ))
     {
-        execlp("./history.o", "./history.o", NULL );
+        char buf [PWD_LEN] = "\0";
+        strcat(buf,pwd);
+        strcat(buf,PATH_HISTORY);
+        execlp(buf, buf, NULL );
     }
     else if (!strcmp(cmd, "help"))
     {
         
-        /*
-        Nota : aqui tener en cuenta el path global donde se ejecuta el fichero 
-        */
-        chdir("help");
-        execlp("./help.o" , "./help.o" , cmdExpr->_Cmd->CmdArgv[1] , NULL);
+        char buf [PWD_LEN] = "\0";
+        strcat(buf,pwd);
+        strcat(buf , PATH_HELP); 
+        execlp(buf ,buf, pwd , cmdExpr->_Cmd->CmdArgv[1] , NULL);
     }
     else
     {
@@ -1232,7 +1234,19 @@ void _Exit_()
 
 void Cd(Cmd* cmdExpr)
 {
-
+    if (cmdExpr->CmdArgv[1])
+    {
+        printf("Llego aqui");
+        if (chdir(cmdExpr->CmdArgv[1])!=0)
+        {
+            printf ("Error : %s  don't exist this directory or is busy ", cmdExpr->CmdArgv[1] ); 
+        }
+        else
+        {
+            printf("cambio el directorio");
+        }
+        
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////

@@ -6,6 +6,7 @@ int flag = 1 ;
 #define max_lon 1000
 char input [max_lon] ; 
 
+
 void guardarcmd (char * cmd )
 {
     int pid ; 
@@ -26,11 +27,62 @@ void guardarcmd (char * cmd )
     
 }
 
+/*
+void createexecutehistory()
+{
+    int pid ;
+    if( pid = fork()== -1)
+    {
+        perror("Error fork ");
+        exit(EXIT_FAILURE);
+    }
+    else if (pid == 0)
+    {
+         
+        char buf [PWD_LEN] = "\0";
+        strcat(buf, pwd); 
+        strcat(buf, "./history.sh");
+        //printf("%s\n" , buf) ;
+        execlp(buf , buf , NULL);
+    }
+    else
+    {
+        wait (NULL);
+    }
+    
+}
+*/
+/*
+void createexecutehelp()
+{
+    int pid ;
+    if( pid = fork()== -1)
+    {
+        perror("Error fork ");
+        exit(EXIT_FAILURE);
+    }
+    else if (pid == 0)
+    {
+         
+        char buf [PWD_LEN] = "\0";
+        strcat(buf, pwd); 
+        strcat(buf, "/help/help.sh");
+        execlp(buf , buf , NULL) ;
+    }
+    else
+    {
+        wait (NULL);
+    }
+    
+}*/
+
 int main () {
 
     signal(SIGINT, SIG_IGN);
     getcwd (pwd ,1000); 
-    printf("%s\n" , pwd); 
+    //createexecutehistory();
+    //createexecutehelp();
+
     while (flag)
     {
 
@@ -41,6 +93,8 @@ int main () {
         scanf("%[^\n]s" , input) ;
 
         guardarcmd(input);
+        
+        
         
         //inicializar una lista de tokens
         TokenList* tl = InitTokenList();

@@ -1,0 +1,1 @@
+gcc -o history.o history.c 
