@@ -178,6 +178,17 @@ satisfactoria, no hace falta ejecutar la 2da.Y sólo si la 1ra expression “fal
     * El shell permite la ejecución de múltiples if en una sola línea, de forma que estos pueden incluso
     estar anidados.
 
+### Algunos comandos de ejemplo
+
+```
+    ls -l
+    clear
+    dir
+    ls -l | wc
+    cat < a.txt > b.txt
+    cat <file.ext>
+```
+
 #### direccion del repositorio
 
 * direccion donte esta actualmente el repositorio  https://github.com/dcruzp/shellbash
